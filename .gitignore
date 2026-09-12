@@ -1,0 +1,6 @@
+tutorial-prompt*.md
+desktop.ini
+Thumbs.db
+.DS_Store
+.netlify/
+node_modules/
