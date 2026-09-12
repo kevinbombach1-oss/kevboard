@@ -773,6 +773,148 @@
   }
 
   /* ---------------------------------------------------------------- */
+  /* Tab navigation                                                    */
+  /* ---------------------------------------------------------------- */
+
+  .tab-bar {
+    display: flex;
+    gap: 4px;
+    width: fit-content;
+    margin-bottom: 20px;
+    padding: 4px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+
+  .tab-btn {
+    padding: 8px 18px;
+    border: none;
+    border-radius: 9px;
+    background: none;
+    color: var(--text-tertiary);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .tab-btn:hover { color: var(--text-secondary); }
+  .tab-btn.is-active {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .view { display: none; }
+  .view.is-active { display: block; }
+
+  /* ---------------------------------------------------------------- */
+  /* Training view                                                     */
+  /* ---------------------------------------------------------------- */
+
+  .tr-login { max-width: 360px; }
+
+  .tr-login .goal-input { width: 100%; margin-bottom: 8px; }
+
+  .tr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .tr-stat {
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .tr-stat-num {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  .tr-stat-label {
+    margin-top: 5px;
+    font-size: 9.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-tertiary);
+  }
+
+  .tr-ex {
+    padding: 12px 14px;
+    margin-bottom: 6px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .tr-ex-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .tr-ex-name { font-size: 13.5px; font-weight: 600; }
+
+  .tr-ex-group {
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+  }
+
+  .tr-sets { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  .tr-set {
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary);
+  }
+  .tr-set.is-warmup { opacity: 0.5; }
+
+  .tr-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    margin-bottom: 6px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+  }
+
+  .tr-row-meta {
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-tertiary);
+  }
+
+  .tr-muted {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-style: italic;
+    padding: 14px 0;
+    text-align: center;
+  }
+
+  /* ---------------------------------------------------------------- */
   /* Narrow screens                                                    */
   /* ---------------------------------------------------------------- */
 
@@ -796,6 +938,13 @@
 <body>
 
 <h1 class="dash-title">Kevins Dashboard</h1>
+
+<div class="tab-bar" role="tablist">
+  <button type="button" class="tab-btn is-active" data-view="dashboard" role="tab">Dashboard</button>
+  <button type="button" class="tab-btn" data-view="training" role="tab">Training</button>
+</div>
+
+<div class="view is-active" id="view-dashboard">
 
 <div class="ticker-row">
   <div class="goal-ticker" id="goalTicker" aria-live="polite" aria-atomic="true">
@@ -901,6 +1050,55 @@
     <div class="gm-status" id="tomorrowStatus"></div>
   </div>
 </div>
+
+</div><!-- /view-dashboard -->
+
+<div class="view" id="view-training">
+  <div class="section">
+    <div class="section-title">Training</div>
+
+    <div class="gm-card tr-login" id="trLogin" hidden>
+      <div class="gm-eyebrow">Anmeldung</div>
+      <div class="gm-subtext" style="margin-bottom:14px;">Deine Trainingsdaten sind geschützt.</div>
+      <input type="email" class="goal-input" id="trEmail" placeholder="E-Mail" autocomplete="username">
+      <input type="password" class="goal-input" id="trPassword" placeholder="Passwort" autocomplete="current-password">
+      <button type="button" class="goal-btn-primary" id="trLoginBtn" style="width:100%;">Anmelden</button>
+      <div class="gm-status" id="trLoginStatus"></div>
+    </div>
+
+    <div id="trContent" hidden>
+      <div class="tr-grid" id="trStats"></div>
+
+      <div class="gm-card">
+        <div class="gm-head">
+          <div>
+            <div class="gm-eyebrow">Letztes Training</div>
+            <div class="gm-subtext" id="trLastMeta"></div>
+          </div>
+          <button type="button" class="goal-btn-secondary" id="trLogoutBtn"
+                  style="padding:7px 14px;font-size:11px;">Abmelden</button>
+        </div>
+        <div id="trLastBody"><div class="tr-muted">Lade…</div></div>
+      </div>
+
+      <div class="gm-card">
+        <div class="gm-eyebrow" style="margin-bottom:12px;">Letzte Workouts</div>
+        <div id="trWorkouts"><div class="tr-muted">Lade…</div></div>
+      </div>
+
+      <div class="gm-card">
+        <div class="gm-eyebrow" style="margin-bottom:12px;">Letzte Läufe</div>
+        <div id="trRuns"><div class="tr-muted">Lade…</div></div>
+      </div>
+    </div>
+
+    <div class="gm-card" id="trBooting">
+      <div class="tr-muted">Verbinde mit Supabase…</div>
+    </div>
+  </div>
+</div><!-- /view-training -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 
 <script>
 (function () {
@@ -1625,6 +1823,314 @@
   setInterval(updateDayBar, 60 * 1000);
 
   Ticker.start();
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  const SUPABASE_URL = 'https://yxgqjvuocxkplygnqegl.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_93pSUZwunlAkMSNr4-7wQw_qzCkXvCn';
+
+  /* ---------------------------------------------------------------- */
+  /* Tabs                                                              */
+  /* ---------------------------------------------------------------- */
+
+  const tabs = document.querySelectorAll('.tab-btn');
+  const views = document.querySelectorAll('.view');
+  let trainingLoaded = false;
+
+  tabs.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      const target = btn.getAttribute('data-view');
+      tabs.forEach(function (b) { b.classList.toggle('is-active', b === btn); });
+      views.forEach(function (v) {
+        v.classList.toggle('is-active', v.id === 'view-' + target);
+      });
+      if (target === 'training' && !trainingLoaded) boot();
+    });
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Helpers                                                           */
+  /* ---------------------------------------------------------------- */
+
+  const el = function (id) { return document.getElementById(id); };
+
+  function isoLocal(d) {
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  function fmtDate(ts) {
+    return new Date(ts).toLocaleDateString('de-DE', {
+      weekday: 'short', day: 'numeric', month: 'short'
+    });
+  }
+
+  function fmtDuration(seconds) {
+    const s = Math.round(seconds);
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const rest = s % 60;
+    if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(rest).padStart(2, '0');
+    return m + ':' + String(rest).padStart(2, '0');
+  }
+
+  function fmtPace(secPerKm) {
+    if (!secPerKm) return '—';
+    const s = Math.round(secPerKm);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ' /km';
+  }
+
+  function calcStreak(days) {
+    const set = new Set(days);
+    const cursor = new Date();
+    if (!set.has(isoLocal(cursor))) cursor.setDate(cursor.getDate() - 1);
+    let n = 0;
+    while (set.has(isoLocal(cursor))) {
+      n += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return n;
+  }
+
+  function statTile(num, label) {
+    return '<div class="tr-stat"><div class="tr-stat-num">' + num +
+           '</div><div class="tr-stat-label">' + label + '</div></div>';
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str == null ? '' : String(str);
+    return div.innerHTML;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Supabase                                                          */
+  /* ---------------------------------------------------------------- */
+
+  let sb = null;
+
+  function showOnly(which) {
+    el('trBooting').hidden = which !== 'booting';
+    el('trLogin').hidden = which !== 'login';
+    el('trContent').hidden = which !== 'content';
+  }
+
+  async function boot() {
+    trainingLoaded = true;
+
+    if (!window.supabase || !window.supabase.createClient) {
+      el('trBooting').innerHTML =
+        '<div class="tr-muted">Supabase-Bibliothek konnte nicht geladen werden. ' +
+        'Besteht eine Internetverbindung?</div>';
+      showOnly('booting');
+      return;
+    }
+
+    sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    const { data } = await sb.auth.getSession();
+    if (data && data.session) {
+      showOnly('content');
+      loadAll();
+    } else {
+      showOnly('login');
+    }
+  }
+
+  el('trLoginBtn').addEventListener('click', login);
+  el('trPassword').addEventListener('keydown', function (e) {
+    if (e.key === 'Enter') login();
+  });
+
+  async function login() {
+    const status = el('trLoginStatus');
+    const email = el('trEmail').value.trim();
+    const password = el('trPassword').value;
+
+    if (!email || !password) {
+      status.textContent = 'Bitte E-Mail und Passwort eingeben.';
+      status.classList.add('is-error');
+      return;
+    }
+
+    status.classList.remove('is-error');
+    status.textContent = 'Melde an…';
+    el('trLoginBtn').disabled = true;
+
+    const { error } = await sb.auth.signInWithPassword({ email: email, password: password });
+    el('trLoginBtn').disabled = false;
+
+    if (error) {
+      status.textContent = 'Anmeldung fehlgeschlagen: ' + error.message;
+      status.classList.add('is-error');
+      return;
+    }
+
+    status.textContent = '';
+    el('trPassword').value = '';
+    showOnly('content');
+    loadAll();
+  }
+
+  el('trLogoutBtn').addEventListener('click', async function () {
+    await sb.auth.signOut();
+    showOnly('login');
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Data loading                                                      */
+  /* ---------------------------------------------------------------- */
+
+  async function loadAll() {
+    loadStats();
+    loadLastWorkout();
+    loadWorkouts();
+    loadRuns();
+  }
+
+  async function loadStats() {
+    const target = el('trStats');
+    try {
+      const [act, wo, ru, se] = await Promise.all([
+        sb.from('activity_days').select('day').order('day', { ascending: false }).limit(400),
+        sb.from('workouts').select('*', { count: 'exact', head: true }),
+        sb.from('runs').select('*', { count: 'exact', head: true }),
+        sb.from('workout_sets').select('*', { count: 'exact', head: true })
+      ]);
+
+      if (act.error) throw act.error;
+
+      const streak = calcStreak((act.data || []).map(function (r) { return r.day; }));
+
+      target.innerHTML =
+        statTile(streak, 'Tage Streak') +
+        statTile(wo.count == null ? '—' : wo.count, 'Workouts') +
+        statTile(ru.count == null ? '—' : ru.count, 'Läufe') +
+        statTile(se.count == null ? '—' : se.count, 'Sätze');
+    } catch (e) {
+      target.innerHTML = '<div class="tr-muted">Statistiken konnten nicht geladen werden: ' +
+        escapeHtml(e.message) + '</div>';
+    }
+  }
+
+  async function loadLastWorkout() {
+    const body = el('trLastBody');
+    const meta = el('trLastMeta');
+    try {
+      const { data, error } = await sb
+        .from('workouts')
+        .select('id, performed_at, finished_at, notes,' +
+                'gyms ( name ), routines ( name ),' +
+                'workout_exercises ( id, position, note,' +
+                '  exercises ( name, muscle_group ),' +
+                '  workout_sets ( set_index, reps, weight_kg, is_warmup ) )')
+        .order('performed_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      if (!data) {
+        meta.textContent = '';
+        body.innerHTML = '<div class="tr-muted">Noch kein Training aufgezeichnet.</div>';
+        return;
+      }
+
+      const bits = [fmtDate(data.performed_at)];
+      if (data.routines && data.routines.name) bits.push(data.routines.name);
+      if (data.gyms && data.gyms.name) bits.push(data.gyms.name);
+      meta.textContent = bits.join(' · ');
+
+      const exercises = (data.workout_exercises || [])
+        .slice()
+        .sort(function (a, b) { return a.position - b.position; });
+
+      if (exercises.length === 0) {
+        body.innerHTML = '<div class="tr-muted">Keine Übungen in diesem Training.</div>';
+        return;
+      }
+
+      body.innerHTML = exercises.map(function (ex) {
+        const sets = (ex.workout_sets || [])
+          .slice()
+          .sort(function (a, b) { return a.set_index - b.set_index; })
+          .map(function (s) {
+            return '<span class="tr-set' + (s.is_warmup ? ' is-warmup' : '') + '">' +
+              s.weight_kg + ' kg × ' + s.reps + '</span>';
+          }).join('');
+
+        return '<div class="tr-ex">' +
+          '<div class="tr-ex-head">' +
+            '<span class="tr-ex-name">' + escapeHtml(ex.exercises && ex.exercises.name) + '</span>' +
+            '<span class="tr-ex-group">' + escapeHtml(ex.exercises && ex.exercises.muscle_group) + '</span>' +
+          '</div>' +
+          '<div class="tr-sets">' + (sets || '<span class="tr-set">keine Sätze</span>') + '</div>' +
+        '</div>';
+      }).join('');
+    } catch (e) {
+      body.innerHTML = '<div class="tr-muted">Konnte nicht geladen werden: ' +
+        escapeHtml(e.message) + '</div>';
+    }
+  }
+
+  async function loadWorkouts() {
+    const target = el('trWorkouts');
+    try {
+      const { data, error } = await sb
+        .from('workouts')
+        .select('id, performed_at, gyms ( name ), routines ( name )')
+        .order('performed_at', { ascending: false })
+        .limit(8);
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        target.innerHTML = '<div class="tr-muted">Noch keine Workouts.</div>';
+        return;
+      }
+
+      target.innerHTML = data.map(function (w) {
+        const name = (w.routines && w.routines.name) || (w.gyms && w.gyms.name) || 'Training';
+        return '<div class="tr-row"><span>' + escapeHtml(name) + '</span>' +
+          '<span class="tr-row-meta">' + fmtDate(w.performed_at) + '</span></div>';
+      }).join('');
+    } catch (e) {
+      target.innerHTML = '<div class="tr-muted">Konnte nicht geladen werden: ' +
+        escapeHtml(e.message) + '</div>';
+    }
+  }
+
+  async function loadRuns() {
+    const target = el('trRuns');
+    try {
+      const { data, error } = await sb
+        .from('runs')
+        .select('id, performed_at, distance_m, duration_s, run_type, pace_s_per_km')
+        .order('performed_at', { ascending: false })
+        .limit(8);
+
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        target.innerHTML = '<div class="tr-muted">Noch keine Läufe.</div>';
+        return;
+      }
+
+      target.innerHTML = data.map(function (r) {
+        const km = (r.distance_m / 1000).toFixed(2).replace('.', ',');
+        return '<div class="tr-row">' +
+          '<span>' + km + ' km <span class="tr-row-meta">· ' + escapeHtml(r.run_type) + '</span></span>' +
+          '<span class="tr-row-meta">' + fmtDuration(r.duration_s) + ' · ' +
+            fmtPace(r.pace_s_per_km) + ' · ' + fmtDate(r.performed_at) + '</span>' +
+        '</div>';
+      }).join('');
+    } catch (e) {
+      target.innerHTML = '<div class="tr-muted">Konnte nicht geladen werden: ' +
+        escapeHtml(e.message) + '</div>';
+    }
+  }
 })();
 </script>
 </body>
