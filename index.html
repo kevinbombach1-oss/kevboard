@@ -2533,7 +2533,7 @@
 
     <!-- Trend -->
     <div class="po-sub-section">
-      <div class="po-sub-title">Trend (last 10 sessions)</div>
+      <div class="po-sub-title">Trend · best set per session (est. 1RM)</div>
       <div class="po-spark-wrap">
         <svg class="po-spark-svg" id="sparkline" viewBox="0 0 300 60" preserveAspectRatio="none">
           <defs>
@@ -3855,17 +3855,38 @@ const CONFIG = {
     $('bestSet').textContent = ex.bw ? (best.reps + 'r') : (best.weight + '×' + best.reps);
     $('sessionCount').textContent = logs.length;
   }
+  // One point per training day, not per set. Mixing sets would draw the
+  // within-session drop-off, and mixing gyms would draw the difference
+  // between two machines' weight stacks — both swamp the actual trend.
+  function sessionValues(ex, logs) {
+    const sameGym = logs.filter(l => !l.gym || l.gym === state.filterGym);
+    const source = sameGym.length >= 2 ? sameGym : logs;
+    const best = new Map();
+    source.forEach(l => {
+      const day = String(l.date).slice(0, 10);
+      const v = ex.bw ? l.reps : estimate1RM(l.weight, l.reps);
+      if (!best.has(day) || v > best.get(day)) best.set(day, v);
+    });
+    return Array.from(best.keys()).sort()
+      .slice(-10)
+      .map(d => best.get(d));
+  }
+
   function renderSparkline() {
     const svg = $('sparkline');
     const empty = $('sparkEmpty');
     const ex = getCurrentEx();
-    const logs = ex ? getLogs().slice(-10) : [];
+    const logs = ex ? getLogs() : [];
     if (logs.length < 2) {
       svg.style.display = 'none'; empty.style.display = 'block';
       return;
     }
     svg.style.display = 'block'; empty.style.display = 'none';
-    const vals = logs.map(l => ex.bw ? l.reps : estimate1RM(l.weight, l.reps));
+    const vals = sessionValues(ex, logs);
+    if (vals.length < 2) {
+      svg.style.display = 'none'; empty.style.display = 'block';
+      return;
+    }
     const min = Math.min.apply(null, vals);
     const max = Math.max.apply(null, vals);
     const range = max - min || 1;
@@ -4206,7 +4227,7 @@ const CONFIG = {
     const w = ex.bw ? 0 : (parseFloat($('weightInput').value) || 0);
     if (!ex.bw && w <= 0) { alert('Enter a weight.'); return; }
     const arr = state.logs[ex.id] || [];
-    arr.push({ weight: w, reps: reps, date: new Date().toISOString() });
+    arr.push({ weight: w, reps: reps, date: new Date().toISOString(), gym: state.filterGym });
     state.logs[ex.id] = arr;
     saveState(); renderAll();
     // Strength changed → composition estimate may shift
