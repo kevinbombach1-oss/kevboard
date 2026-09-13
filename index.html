@@ -641,6 +641,59 @@
     100% { background: rgba(242, 192, 99, 0.10); transform: scale(1); }
   }
 
+  /* Insertion point between two goals */
+
+  .goal-insert {
+    height: 14px;
+    display: flex;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+  .goal-insert:hover,
+  .goal-insert:focus-within { opacity: 1; }
+
+  .goal-insert-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--text-tertiary);
+    font-family: inherit;
+    font-size: 13px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .goal-insert-btn::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.14);
+  }
+  .goal-insert-btn:hover { color: var(--text-primary); }
+
+  .goal-insert-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+
+  .goal-insert-input {
+    flex: 1;
+    padding: 11px 14px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 14px;
+    outline: none;
+  }
+  .goal-insert-input::placeholder { color: var(--text-tertiary); }
+
   .gm-more-toggle {
     display: block;
     width: 100%;
@@ -3045,6 +3098,66 @@
     return li;
   }
 
+  // Which gap is currently showing an input. Nothing is written to storage
+  // until the user actually commits text, so an abandoned gap leaves no
+  // empty goal behind.
+  const insertAt = { key: null, index: -1 };
+
+  function buildInsertPoint(index, key, reload) {
+    const li = document.createElement('li');
+    li.className = 'goal-insert';
+
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'goal-insert-btn';
+    btn.textContent = '+';
+    btn.title = 'Hier ein Ziel einfügen';
+    btn.addEventListener('click', function () {
+      insertAt.key = key;
+      insertAt.index = index;
+      reload();
+    });
+
+    li.appendChild(btn);
+    return li;
+  }
+
+  function buildInsertRow(index, key, reload) {
+    const li = document.createElement('li');
+    li.className = 'goal-insert-row';
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'goal-insert-input';
+    input.placeholder = 'Ziel an dieser Stelle…';
+
+    // Committing re-renders, which removes this input and fires blur again.
+    let settled = false;
+
+    function commit() {
+      if (settled) return;
+      settled = true;
+      const value = input.value.trim();
+      insertAt.key = null;
+      insertAt.index = -1;
+      if (!value) { reload(); return; }
+      const goals = storeGet(key) || [];
+      goals.splice(index, 0, { text: value, done: false });
+      storeSet(key, goals);
+      reload();
+    }
+
+    input.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter') { e.preventDefault(); commit(); }
+      else if (e.key === 'Escape') { e.preventDefault(); input.value = ''; commit(); }
+    });
+    input.addEventListener('blur', commit);
+
+    li.appendChild(input);
+    setTimeout(function () { input.focus(); }, 0);
+    return li;
+  }
+
   function renderListInto(goals, listEl, emptyEl, key, readOnly) {
     const reload = (key === todayKey()) ? loadToday : loadTomorrow;
 
@@ -3055,6 +3168,11 @@
     const limit = (goals.length > 5 && !isOpen) ? 5 : goals.length;
 
     for (let i = 0; i < limit; i++) {
+      if (insertAt.key === key && insertAt.index === i) {
+        listEl.appendChild(buildInsertRow(i, key, reload));
+      } else {
+        listEl.appendChild(buildInsertPoint(i, key, reload));
+      }
       listEl.appendChild(buildGoalRow(goals[i], i, key, readOnly, reload));
     }
 
