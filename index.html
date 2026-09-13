@@ -3008,7 +3008,7 @@
       goals.forEach(function (g) {
         if (g.done) return;
         const dupe = today.some(function (t) { return t.text === g.text; });
-        if (!dupe) today.push({ text: g.text, done: false });
+        if (!dupe) today.push(carryGoal(g));
       });
       storeDelete(GOAL_PREFIX + d);
       touched = true;
@@ -3328,6 +3328,26 @@
     return Array.isArray(goal.subs) ? goal.subs : [];
   }
 
+  // A copy for the next day. Steps keep whatever was already ticked off —
+  // that work happened and shouldn't silently reappear as outstanding.
+  // `queued` is deliberately dropped: it marks today's productivity
+  // window, so a new day starts with that slate clear.
+  function carryGoal(goal) {
+    const copy = { text: goal.text, done: false };
+    if (goal.priority) copy.priority = goal.priority;
+
+    const subs = subsOf(goal);
+    if (subs.length) {
+      copy.subs = subs.map(function (s) {
+        const sub = { text: s.text, done: !!s.done };
+        if (s.done && s.doneAt) sub.doneAt = s.doneAt;
+        if (s.priority) sub.priority = s.priority;
+        return sub;
+      });
+    }
+    return copy;
+  }
+
   // A parent with steps is done exactly when all of its steps are.
   function syncParentDone(goal) {
     const subs = subsOf(goal);
@@ -3526,7 +3546,7 @@
     const tomorrow = storeGet(tKey) || [];
     remaining.forEach(function (g) {
       const dupe = tomorrow.some(function (t) { return t.text === g.text; });
-      if (!dupe) tomorrow.push({ text: g.text, done: false });
+      if (!dupe) tomorrow.push(carryGoal(g));
     });
     storeSet(tKey, tomorrow);
     storeSet(key, goals.filter(function (g) { return g.done; }));
