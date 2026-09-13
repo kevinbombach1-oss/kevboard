@@ -12,6 +12,7 @@
     --success: #6BE3A4;
     --warning: #F2C063;
     --danger: #FF6B6B;
+    --step: #8AB4F8;
     --font-body: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
     --card-bg: rgba(255, 255, 255, 0.04);
@@ -650,10 +651,10 @@
     font-size: 10.5px;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
-    color: var(--text-tertiary);
+    color: var(--step);
     padding: 2px 7px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.05);
+    background: rgba(138, 180, 248, 0.14);
   }
 
   .goal-sub-add {
@@ -669,12 +670,15 @@
     transition: opacity 0.2s ease, color 0.2s ease;
   }
   .goal-item:hover .goal-sub-add { opacity: 1; }
-  .goal-sub-add:hover { color: var(--text-primary); }
+  .goal-sub-add:hover { color: var(--step); }
 
+  /* The rail makes the nesting readable at a glance, the cool tint keeps
+     steps from being mistaken for goals of their own. */
   .goal-subs {
     list-style: none;
-    margin: 4px 0 0 30px;
-    padding: 0;
+    margin: 6px 0 0 24px;
+    padding: 0 0 0 14px;
+    border-left: 2px solid rgba(138, 180, 248, 0.3);
   }
 
   .goal-sub {
@@ -684,11 +688,11 @@
     padding: 8px 12px;
     margin-bottom: 4px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(138, 180, 248, 0.06);
+    border: 1px solid rgba(138, 180, 248, 0.15);
     transition: background 0.2s ease;
   }
-  .goal-sub:hover { background: rgba(255, 255, 255, 0.055); }
+  .goal-sub:hover { background: rgba(138, 180, 248, 0.13); }
   .goal-sub:hover .goal-delete { opacity: 1; }
 
   .goal-check-sub {
@@ -696,6 +700,7 @@
     width: 18px;
     height: 18px;
     border-radius: 6px;
+    border-color: rgba(138, 180, 248, 0.4);
   }
   .goal-check-sub:checked::after {
     left: 5.5px;
@@ -705,7 +710,7 @@
     border-width: 0 2px 2px 0;
   }
 
-  .goal-text-sub { font-size: 13px; color: var(--text-secondary); }
+  .goal-text-sub { font-size: 13px; color: #C5D8F7; }
 
   .goal-sub.is-done { opacity: 0.45; }
   .goal-sub.is-done .goal-text-sub {
@@ -719,8 +724,8 @@
     width: 100%;
     padding: 8px 12px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(138, 180, 248, 0.09);
+    border: 1px solid rgba(138, 180, 248, 0.5);
     color: var(--text-primary);
     font-family: inherit;
     font-size: 13px;
