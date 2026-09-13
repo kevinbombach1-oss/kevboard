@@ -641,6 +641,39 @@
     100% { background: rgba(242, 192, 99, 0.10); transform: scale(1); }
   }
 
+  /* Priority — one flag cycling through the levels */
+
+  .goal-prio {
+    flex: 0 0 auto;
+    background: none;
+    border: none;
+    padding: 2px 4px;
+    font-size: 13px;
+    line-height: 1;
+    color: var(--text-tertiary);
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease, color 0.2s ease;
+  }
+  .goal-item:hover .goal-prio { opacity: 0.6; }
+  .goal-prio.is-set { opacity: 1; }
+  .goal-prio:hover { opacity: 1; }
+
+  .goal-prio[data-prio="high"] {
+    color: #FF6B6B;
+    filter: drop-shadow(0 0 5px rgba(255, 107, 107, 0.6));
+  }
+  .goal-prio[data-prio="medium"] {
+    color: #FF9F5A;
+    filter: drop-shadow(0 0 5px rgba(255, 159, 90, 0.5));
+  }
+  .goal-prio[data-prio="low"] { color: #8FA3B8; }
+
+  /* Queued already owns the left stripe, so priority tints the border. */
+  .goal-item.is-prio-high   { border-color: rgba(255, 107, 107, 0.4); }
+  .goal-item.is-prio-medium { border-color: rgba(255, 159, 90, 0.34); }
+  .goal-item.is-prio-low    { border-color: rgba(143, 163, 184, 0.26); }
+
   /* Sub-steps under a goal */
 
   .goal-entry { margin-bottom: 6px; }
@@ -2936,6 +2969,14 @@
 
   const expanded = {};
 
+  // Clicking the flag walks this cycle, so one control covers all levels.
+  const PRIO_CYCLE = [null, 'high', 'medium', 'low'];
+  const PRIO_LABEL = {
+    high: 'Hohe Priorität',
+    medium: 'Mittlere Priorität',
+    low: 'Niedrige Priorität'
+  };
+
   function renderTodayHeader() {
     const goals = storeGet(todayKey()) || [];
     const total = goals.length;
@@ -3073,6 +3114,7 @@
     li.className = 'goal-item';
     if (goal.done) li.classList.add('is-done');
     if (goal.queued) li.classList.add('is-queued');
+    if (goal.priority) li.classList.add('is-prio-' + goal.priority);
 
     const handle = document.createElement('span');
     handle.className = 'goal-handle';
@@ -3124,6 +3166,23 @@
                           '/' + subs.length;
     }
 
+    const prioBtn = document.createElement('button');
+    prioBtn.type = 'button';
+    prioBtn.className = 'goal-prio' + (goal.priority ? ' is-set' : '');
+    prioBtn.textContent = '⚑';
+    if (goal.priority) prioBtn.setAttribute('data-prio', goal.priority);
+    prioBtn.title = goal.priority ? PRIO_LABEL[goal.priority] : 'Priorität setzen';
+    prioBtn.addEventListener('click', function () {
+      const goals = storeGet(key) || [];
+      if (!goals[idx]) return;
+      const current = goals[idx].priority || null;
+      const next = PRIO_CYCLE[(PRIO_CYCLE.indexOf(current) + 1) % PRIO_CYCLE.length];
+      if (next) goals[idx].priority = next;
+      else delete goals[idx].priority;
+      storeSet(key, goals);
+      reload();
+    });
+
     const addSubBtn = document.createElement('button');
     addSubBtn.type = 'button';
     addSubBtn.className = 'goal-sub-add';
@@ -3166,6 +3225,7 @@
     li.appendChild(cb);
     li.appendChild(text);
     if (count) li.appendChild(count);
+    li.appendChild(prioBtn);
     li.appendChild(addSubBtn);
     li.appendChild(queueBtn);
     li.appendChild(del);
