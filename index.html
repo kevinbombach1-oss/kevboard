@@ -503,7 +503,6 @@
     align-items: center;
     gap: 12px;
     padding: 12px 14px;
-    margin-bottom: 6px;
     background: rgba(255, 255, 255, 0.035);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 12px;
@@ -513,8 +512,8 @@
   .goal-item:hover .goal-handle,
   .goal-item:hover .goal-delete { opacity: 1; }
 
-  .goal-item.is-dragging { opacity: 0.4; }
-  .goal-item.is-drag-over { border-top: 2px solid rgba(255, 255, 255, 0.45); }
+  .goal-entry.is-dragging { opacity: 0.4; }
+  .goal-entry.is-drag-over { border-top: 2px solid rgba(255, 255, 255, 0.45); }
 
   .goal-handle {
     flex: 0 0 14px;
@@ -641,78 +640,93 @@
     100% { background: rgba(242, 192, 99, 0.10); transform: scale(1); }
   }
 
-  /* Insertion point between two goals */
+  /* Sub-steps under a goal */
 
-  .goal-insert {
-    height: 22px;
-    display: flex;
-    align-items: center;
-    opacity: 0.5;
-    transition: opacity 0.15s ease;
+  .goal-entry { margin-bottom: 6px; }
+
+  .goal-sub-count {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-tertiary);
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
   }
-  .goal-insert:hover,
-  .goal-insert:focus-within { opacity: 1; }
 
-  .goal-insert-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    width: 100%;
-    height: 100%;
-    padding: 0;
+  .goal-sub-add {
+    flex: 0 0 auto;
     background: none;
     border: none;
-    color: var(--text-tertiary);
-    font-family: inherit;
-    font-size: 11px;
+    padding: 2px 5px;
+    font-size: 15px;
     line-height: 1;
+    color: var(--text-tertiary);
+    opacity: 0.5;
     cursor: pointer;
+    transition: opacity 0.2s ease, color 0.2s ease;
+  }
+  .goal-item:hover .goal-sub-add { opacity: 1; }
+  .goal-sub-add:hover { color: var(--text-primary); }
+
+  .goal-subs {
+    list-style: none;
+    margin: 4px 0 0 30px;
+    padding: 0;
   }
 
-  .goal-insert-mark {
-    flex: 0 0 16px;
-    width: 16px;
-    height: 16px;
+  .goal-sub {
     display: flex;
     align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 50%;
-    font-size: 12px;
-    line-height: 1;
+    gap: 10px;
+    padding: 8px 12px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s ease;
+  }
+  .goal-sub:hover { background: rgba(255, 255, 255, 0.055); }
+  .goal-sub:hover .goal-delete { opacity: 1; }
+
+  .goal-check-sub {
+    flex: 0 0 18px;
+    width: 18px;
+    height: 18px;
+    border-radius: 6px;
+  }
+  .goal-check-sub:checked::after {
+    left: 5.5px;
+    top: 1.5px;
+    width: 4px;
+    height: 9px;
+    border-width: 0 2px 2px 0;
   }
 
-  .goal-insert-btn::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: linear-gradient(90deg, rgba(255, 255, 255, 0.14), transparent);
+  .goal-text-sub { font-size: 13px; color: var(--text-secondary); }
+
+  .goal-sub.is-done { opacity: 0.45; }
+  .goal-sub.is-done .goal-text-sub {
+    text-decoration: line-through;
+    text-decoration-color: rgba(255, 255, 255, 0.4);
   }
 
-  .goal-insert-btn:hover { color: var(--text-primary); }
-  .goal-insert-btn:hover .goal-insert-mark {
-    border-color: rgba(255, 255, 255, 0.55);
-    background: rgba(255, 255, 255, 0.08);
-  }
+  .goal-sub-input-row { margin-bottom: 4px; }
 
-  .goal-insert-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 6px;
-  }
-
-  .goal-insert-input {
-    flex: 1;
-    padding: 11px 14px;
-    border-radius: 12px;
+  .goal-sub-input {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 10px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.28);
     color: var(--text-primary);
     font-family: inherit;
-    font-size: 14px;
+    font-size: 13px;
     outline: none;
   }
-  .goal-insert-input::placeholder { color: var(--text-tertiary); }
+  .goal-sub-input::placeholder { color: var(--text-tertiary); }
 
   .gm-more-toggle {
     display: block;
@@ -2957,7 +2971,9 @@
     document.getElementById('gmTomorrowCount').textContent = goals.length + ' planned';
   }
 
-  function makeInlineEdit(textEl, idx, key, reload) {
+  // `save(value)` persists the new text and returns whether it worked, so
+  // the same editor serves both goals and their steps.
+  function makeInlineEdit(textEl, reload, save) {
     let original = '';
     let cancelled = false;
 
@@ -2998,11 +3014,8 @@
       const value = textEl.textContent.trim();
       if (!value || value === original) { textEl.textContent = original; return; }
 
-      const goals = storeGet(key) || [];
-      if (!goals[idx]) return;
-      goals[idx].text = value;
-      storeSet(key, goals);
-      reload();
+      if (save(value)) reload();
+      else textEl.textContent = original;
     });
   }
 
@@ -3048,7 +3061,10 @@
   }
 
   function buildGoalRow(goal, idx, key, readOnly, reload) {
-    const li = document.createElement('li');
+    const entry = document.createElement('li');
+    entry.className = 'goal-entry';
+
+    const li = document.createElement('div');
     li.className = 'goal-item';
     if (goal.done) li.classList.add('is-done');
     if (goal.queued) li.classList.add('is-queued');
@@ -3072,6 +3088,13 @@
       goals[idx].done = cb.checked;
       if (cb.checked) goals[idx].doneAt = Date.now();
       else delete goals[idx].doneAt;
+      // Ticking the parent settles every step with it, so the two can
+      // never disagree.
+      subsOf(goals[idx]).forEach(function (s) {
+        s.done = cb.checked;
+        if (cb.checked) s.doneAt = Date.now();
+        else delete s.doneAt;
+      });
       storeSet(key, goals);
       reload();
     });
@@ -3079,7 +3102,33 @@
     const text = document.createElement('span');
     text.className = 'goal-text';
     text.textContent = goal.text;
-    makeInlineEdit(text, idx, key, reload);
+    makeInlineEdit(text, reload, function (value) {
+      const goals = storeGet(key) || [];
+      if (!goals[idx]) return false;
+      goals[idx].text = value;
+      storeSet(key, goals);
+      return true;
+    });
+
+    const subs = subsOf(goal);
+    let count = null;
+    if (subs.length) {
+      count = document.createElement('span');
+      count.className = 'goal-sub-count';
+      count.textContent = subs.filter(function (s) { return s.done; }).length +
+                          '/' + subs.length;
+    }
+
+    const addSubBtn = document.createElement('button');
+    addSubBtn.type = 'button';
+    addSubBtn.className = 'goal-sub-add';
+    addSubBtn.textContent = '+';
+    addSubBtn.title = 'Schritt hinzufügen';
+    addSubBtn.addEventListener('click', function () {
+      addSubTo.key = key;
+      addSubTo.index = idx;
+      reload();
+    });
 
     const queueBtn = document.createElement('button');
     queueBtn.type = 'button';
@@ -3111,75 +3160,151 @@
     li.appendChild(handle);
     li.appendChild(cb);
     li.appendChild(text);
+    if (count) li.appendChild(count);
+    li.appendChild(addSubBtn);
     li.appendChild(queueBtn);
     li.appendChild(del);
 
-    wireDragReorder(li, handle, idx, key, reload);
-    return li;
+    entry.appendChild(li);
+    const subList = buildSubList(goal, idx, key, readOnly, reload);
+    if (subList) entry.appendChild(subList);
+
+    wireDragReorder(entry, handle, idx, key, reload);
+    return entry;
   }
 
-  // Which gap is currently showing an input. Nothing is written to storage
-  // until the user actually commits text, so an abandoned gap leaves no
-  // empty goal behind.
-  const insertAt = { key: null, index: -1 };
+  // Which goal is currently showing the "add a step" input.
+  const addSubTo = { key: null, index: -1 };
 
-  function buildInsertPoint(index, key, reload) {
+  function subsOf(goal) {
+    return Array.isArray(goal.subs) ? goal.subs : [];
+  }
+
+  // A parent with steps is done exactly when all of its steps are.
+  function syncParentDone(goal) {
+    const subs = subsOf(goal);
+    if (!subs.length) return;
+    goal.done = subs.every(function (s) { return s.done; });
+    if (goal.done) { if (!goal.doneAt) goal.doneAt = Date.now(); }
+    else delete goal.doneAt;
+  }
+
+  function buildSubRow(sub, subIdx, idx, key, readOnly, reload) {
     const li = document.createElement('li');
-    li.className = 'goal-insert';
+    li.className = 'goal-sub' + (sub.done ? ' is-done' : '');
 
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'goal-insert-btn';
-    btn.title = 'Hier ein Ziel einfügen';
-
-    const mark = document.createElement('span');
-    mark.className = 'goal-insert-mark';
-    mark.textContent = '+';
-    btn.appendChild(mark);
-    btn.addEventListener('click', function () {
-      insertAt.key = key;
-      insertAt.index = index;
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.className = 'goal-check goal-check-sub';
+    cb.checked = !!sub.done;
+    if (readOnly) {
+      cb.disabled = true;
+      cb.title = 'Activates at 6 AM tomorrow';
+    }
+    cb.addEventListener('change', function () {
+      const goals = storeGet(key) || [];
+      const target = goals[idx] && subsOf(goals[idx])[subIdx];
+      if (!target) return;
+      target.done = cb.checked;
+      if (cb.checked) target.doneAt = Date.now();
+      else delete target.doneAt;
+      syncParentDone(goals[idx]);
+      storeSet(key, goals);
       reload();
     });
 
-    li.appendChild(btn);
+    const text = document.createElement('span');
+    text.className = 'goal-text goal-text-sub';
+    text.textContent = sub.text;
+    makeInlineEdit(text, reload, function (value) {
+      const goals = storeGet(key) || [];
+      const target = goals[idx] && subsOf(goals[idx])[subIdx];
+      if (!target) return false;
+      target.text = value;
+      storeSet(key, goals);
+      return true;
+    });
+
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'goal-delete';
+    del.textContent = '×';
+    del.title = 'Schritt löschen';
+    del.addEventListener('click', function () {
+      const goals = storeGet(key) || [];
+      if (!goals[idx]) return;
+      subsOf(goals[idx]).splice(subIdx, 1);
+      if (!subsOf(goals[idx]).length) delete goals[idx].subs;
+      else syncParentDone(goals[idx]);
+      storeSet(key, goals);
+      reload();
+    });
+
+    li.appendChild(cb);
+    li.appendChild(text);
+    li.appendChild(del);
     return li;
   }
 
-  function buildInsertRow(index, key, reload) {
+  function buildSubInput(idx, key, reload) {
     const li = document.createElement('li');
-    li.className = 'goal-insert-row';
+    li.className = 'goal-sub-input-row';
 
     const input = document.createElement('input');
     input.type = 'text';
-    input.className = 'goal-insert-input';
-    input.placeholder = 'Ziel an dieser Stelle…';
+    input.className = 'goal-sub-input';
+    input.placeholder = 'Schritt hinzufügen…';
 
-    // Committing re-renders, which removes this input and fires blur again.
+    // Committing re-renders, which drops this input and fires blur again.
     let settled = false;
 
-    function commit() {
+    // This element is replaced on every commit, so it is always spent —
+    // keepOpen only decides whether a fresh input takes its place.
+    function commit(keepOpen) {
       if (settled) return;
       settled = true;
       const value = input.value.trim();
-      insertAt.key = null;
-      insertAt.index = -1;
+
+      if (!keepOpen || !value) {
+        addSubTo.key = null;
+        addSubTo.index = -1;
+      }
+
       if (!value) { reload(); return; }
+
       const goals = storeGet(key) || [];
-      goals.splice(index, 0, { text: value, done: false });
+      if (!goals[idx]) { reload(); return; }
+      if (!Array.isArray(goals[idx].subs)) goals[idx].subs = [];
+      goals[idx].subs.push({ text: value, done: false });
+      syncParentDone(goals[idx]);
       storeSet(key, goals);
       reload();
     }
 
     input.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter') { e.preventDefault(); commit(); }
-      else if (e.key === 'Escape') { e.preventDefault(); input.value = ''; commit(); }
+      // Enter keeps the field open so a list of steps can be typed in one go.
+      if (e.key === 'Enter') { e.preventDefault(); commit(true); }
+      else if (e.key === 'Escape') { e.preventDefault(); input.value = ''; commit(false); }
     });
-    input.addEventListener('blur', commit);
+    input.addEventListener('blur', function () { commit(false); });
 
     li.appendChild(input);
     setTimeout(function () { input.focus(); }, 0);
     return li;
+  }
+
+  function buildSubList(goal, idx, key, readOnly, reload) {
+    const subs = subsOf(goal);
+    const open = addSubTo.key === key && addSubTo.index === idx;
+    if (!subs.length && !open) return null;
+
+    const ul = document.createElement('ul');
+    ul.className = 'goal-subs';
+    subs.forEach(function (sub, subIdx) {
+      ul.appendChild(buildSubRow(sub, subIdx, idx, key, readOnly, reload));
+    });
+    if (open) ul.appendChild(buildSubInput(idx, key, reload));
+    return ul;
   }
 
   function renderListInto(goals, listEl, emptyEl, key, readOnly) {
@@ -3192,11 +3317,6 @@
     const limit = (goals.length > 5 && !isOpen) ? 5 : goals.length;
 
     for (let i = 0; i < limit; i++) {
-      if (insertAt.key === key && insertAt.index === i) {
-        listEl.appendChild(buildInsertRow(i, key, reload));
-      } else {
-        listEl.appendChild(buildInsertPoint(i, key, reload));
-      }
       listEl.appendChild(buildGoalRow(goals[i], i, key, readOnly, reload));
     }
 
@@ -3374,7 +3494,14 @@
         items = [{ status: 'done', text: '✓ All goals done — solid day.' }];
       } else {
         items = goals.filter(function (g) { return !g.done; })
-          .map(function (g) { return { status: 'pending', text: g.text }; });
+          .map(function (g) {
+            const subs = Array.isArray(g.subs) ? g.subs : [];
+            const suffix = subs.length
+              ? '  (' + subs.filter(function (s) { return s.done; }).length +
+                '/' + subs.length + ')'
+              : '';
+            return { status: 'pending', text: g.text + suffix };
+          });
       }
       return { items: items, done: done, total: total };
     }
