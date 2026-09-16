@@ -1158,6 +1158,216 @@
   .tr-synced.is-off { color: var(--warning); }
 
   /* ---------------------------------------------------------------- */
+  /* Task statistics                                                   */
+  /* ---------------------------------------------------------------- */
+
+  #tsSection {
+    /* Heatmap steps: none, then 1–25 / 26–50 / 51–75 / 76–99 / 100 %.
+       Each scheme is one hue, validated as an ordinal ramp on the card. */
+    --ts-empty: #1f1f22;
+    --ts-1: #184f95; --ts-2: #256abf; --ts-3: #3987e5; --ts-4: #6da7ec; --ts-5: #b7d3f6;
+  }
+  #tsSection[data-scheme="gruen"]  { --ts-1: #19613a; --ts-2: #1e8249; --ts-3: #27a55c; --ts-4: #4fd07f; --ts-5: #a6f0c0; }
+  #tsSection[data-scheme="lila"]   { --ts-1: #4b3a9c; --ts-2: #6552c4; --ts-3: #8471e0; --ts-4: #a99bf0; --ts-5: #d6cffa; }
+  #tsSection[data-scheme="orange"] { --ts-1: #8a3a12; --ts-2: #b24d18; --ts-3: #d9661f; --ts-4: #f08a4b; --ts-5: #fbc49e; }
+
+  .ts-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+  .ts-bar-right { position: relative; display: flex; align-items: center; gap: 8px; }
+  .ts-seg {
+    display: flex;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+  .ts-seg-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 8px;
+    background: none;
+    color: var(--text-tertiary);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .ts-seg-btn:hover { color: var(--text-secondary); }
+  .ts-seg-btn.is-active { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+  .ts-gear {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.035);
+    color: var(--text-tertiary);
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .ts-gear:hover, .ts-gear[aria-expanded="true"] { color: var(--text-primary); background: rgba(255, 255, 255, 0.08); }
+  .ts-settings {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: #141416;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    box-shadow: var(--card-shadow);
+  }
+  .ts-schemes { display: flex; gap: 8px; }
+  .ts-scheme {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 6px 6px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    background: none;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .ts-scheme:hover { background: rgba(255, 255, 255, 0.05); }
+  .ts-scheme.is-active { border-color: rgba(255, 255, 255, 0.28); color: var(--text-primary); }
+  .ts-scheme-dots { display: flex; gap: 2px; }
+  .ts-scheme-dots span { width: 9px; height: 9px; border-radius: 2px; }
+
+  .ts-cards {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .ts-card {
+    padding: 16px 18px;
+    border-radius: var(--card-radius);
+    background: var(--card-bg);
+    min-width: 0;
+  }
+  .ts-card-label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+  .ts-card-value {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+    font-variant-numeric: tabular-nums;
+  }
+  .ts-card-unit { font-size: 14px; font-weight: 600; color: var(--text-secondary); letter-spacing: 0; margin-left: 4px; }
+  .ts-card-sub { margin-top: 6px; font-size: 11px; color: var(--text-tertiary); min-height: 14px; }
+
+  .ts-heat-card { padding-bottom: 16px; }
+  .ts-heat-scroll { overflow-x: auto; padding-bottom: 4px; }
+  .ts-heat {
+    display: grid;
+    grid-template-columns: 22px auto;
+    grid-template-rows: 16px auto;
+    column-gap: 6px;
+    row-gap: 4px;
+    width: max-content;
+    margin: 0 auto;
+  }
+  .ts-months { grid-column: 2; display: grid; gap: 3px; font-size: 10px; color: var(--text-tertiary); }
+  .ts-months span { white-space: nowrap; overflow: visible; }
+  .ts-weekdays { grid-column: 1; grid-row: 2; display: grid; grid-template-rows: repeat(7, var(--ts-cell)); gap: 3px; font-size: 10px; color: var(--text-tertiary); }
+  .ts-weekdays span { line-height: var(--ts-cell); }
+  .ts-grid {
+    grid-column: 2;
+    grid-row: 2;
+    display: grid;
+    grid-auto-flow: column;
+    grid-template-rows: repeat(7, var(--ts-cell));
+    grid-auto-columns: var(--ts-cell);
+    gap: 3px;
+  }
+  .ts-heat { --ts-cell: 14px; }
+  .ts-cell {
+    border-radius: calc(var(--ts-cell) / 4.5);
+    background: var(--ts-empty);
+    cursor: default;
+    outline: none;
+  }
+  .ts-cell.is-outside { background: transparent; }
+  .ts-cell[data-level="1"] { background: var(--ts-1); }
+  .ts-cell[data-level="2"] { background: var(--ts-2); }
+  .ts-cell[data-level="3"] { background: var(--ts-3); }
+  .ts-cell[data-level="4"] { background: var(--ts-4); }
+  .ts-cell[data-level="5"] { background: var(--ts-5); }
+  .ts-cell.is-today { box-shadow: 0 0 0 2px #0f0f10, 0 0 0 3.5px var(--ts-5); }
+  .ts-cell:not(.is-outside):hover, .ts-cell:focus-visible { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.7); }
+
+  .ts-legend {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: var(--text-tertiary);
+  }
+  .ts-legend-cells { display: flex; gap: 3px; }
+  .ts-legend-cells span { width: 12px; height: 12px; border-radius: 3px; }
+
+  .ts-tooltip {
+    position: fixed;
+    z-index: 50;
+    pointer-events: none;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(20, 20, 22, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .ts-tooltip-date { color: var(--text-tertiary); }
+
+  .ts-hint { font-size: 11px; color: var(--text-tertiary); }
+  .ts-cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .ts-cat-head .gm-eyebrow { margin-bottom: 0; }
+  .ts-cat-row {
+    display: grid;
+    grid-template-columns: minmax(90px, 160px) 1fr 120px;
+    gap: 12px;
+    align-items: center;
+    padding: 8px 0;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .ts-cat-name { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 600; }
+  .ts-cat-name span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ts-swatch { width: 10px; height: 10px; border-radius: 3px; flex: 0 0 auto; }
+  .ts-cat-track { height: 14px; border-radius: 4px; background: rgba(255, 255, 255, 0.04); overflow: hidden; }
+  .ts-cat-fill { height: 100%; border-radius: 0 4px 4px 0; }
+  .ts-cat-val { text-align: right; color: var(--text-secondary); white-space: nowrap; }
+  .ts-cat-val strong { color: var(--text-primary); }
+
+  @media (max-width: 640px) {
+    .ts-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .ts-card-value { font-size: 24px; }
+    .ts-heat { margin: 0; }
+    .ts-cat-row { grid-template-columns: 1fr 96px; }
+    .ts-cat-track { grid-column: 1 / -1; grid-row: 2; }
+  }
+
+  /* ---------------------------------------------------------------- */
   /* Laufen view                                                       */
   /* ---------------------------------------------------------------- */
 
@@ -2830,6 +3040,65 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     </div>
     <div class="gm-status" id="tomorrowStatus"></div>
   </div>
+</div>
+
+<div class="section" id="tsSection">
+  <div class="section-title">Statistik</div>
+
+  <div class="ts-bar">
+    <div class="ts-seg" role="tablist">
+      <button type="button" class="ts-seg-btn is-active" data-ts-tab="overview">Übersicht</button>
+      <button type="button" class="ts-seg-btn" data-ts-tab="categories">Kategorien</button>
+    </div>
+    <div class="ts-bar-right">
+      <div class="ts-seg" role="group" aria-label="Zeitraum">
+        <button type="button" class="ts-seg-btn is-active" data-ts-range="all">Alle</button>
+        <button type="button" class="ts-seg-btn" data-ts-range="30">30T</button>
+        <button type="button" class="ts-seg-btn" data-ts-range="7">7T</button>
+      </div>
+      <button type="button" class="ts-gear" id="tsGear" aria-label="Einstellungen" aria-expanded="false">⚙</button>
+      <div class="ts-settings" id="tsSettings" hidden>
+        <div class="gm-eyebrow">Farbschema</div>
+        <div class="ts-schemes" id="tsSchemes"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="gm-status" id="tsStatus"></div>
+
+  <div id="tsOverview">
+    <div class="ts-cards">
+      <div class="ts-card"><div class="ts-card-label">Erledigte Tasks</div><div class="ts-card-value" id="tsDone">–</div><div class="ts-card-sub" id="tsDoneSub"></div></div>
+      <div class="ts-card"><div class="ts-card-label">Aktive Tage</div><div class="ts-card-value" id="tsActive">–</div><div class="ts-card-sub" id="tsActiveSub"></div></div>
+      <div class="ts-card"><div class="ts-card-label">Aktueller Streak</div><div class="ts-card-value" id="tsStreak">–</div><div class="ts-card-sub">Tage mit ≥ 50 %</div></div>
+      <div class="ts-card"><div class="ts-card-label">Längster Streak</div><div class="ts-card-value" id="tsLongest">–</div><div class="ts-card-sub" id="tsLongestSub"></div></div>
+      <div class="ts-card"><div class="ts-card-label">Produktivste Stunde</div><div class="ts-card-value" id="tsHour">–</div><div class="ts-card-sub" id="tsHourSub"></div></div>
+      <div class="ts-card"><div class="ts-card-label">Ø Erledigungsquote</div><div class="ts-card-value" id="tsRate">–</div><div class="ts-card-sub" id="tsRateSub"></div></div>
+    </div>
+
+    <div class="gm-card ts-heat-card">
+      <div class="ts-heat-scroll" id="tsHeatScroll">
+        <div class="ts-heat" id="tsHeat"></div>
+      </div>
+      <div class="ts-legend">
+        <span>weniger</span>
+        <span class="ts-legend-cells" id="tsLegend"></span>
+        <span>mehr</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="tsCategories" hidden>
+    <div class="gm-card">
+      <div class="ts-cat-head">
+        <div class="gm-eyebrow">Erledigte Tasks pro Kategorie</div>
+        <div class="ts-hint">Kategorie = erster #hashtag im Task-Text</div>
+      </div>
+      <div id="tsCatList"></div>
+    </div>
+  </div>
+
+  <div class="ts-tooltip" id="tsTooltip" hidden></div>
 </div>
 
 </div><!-- /view-dashboard -->
@@ -4729,6 +4998,430 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   }
 
   window.TaskStats = { fetchHistory: fetchHistory, dayStats: dayStats, categoryOf: categoryOf, activeDay: activeDay, addDays: addDays };
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- */
+  /* Task statistics — cards, heatmap and categories over the day      */
+  /* history in task_days, with the lists on this device laid on top   */
+  /* so ticking a task off shows up immediately.                       */
+  /* ---------------------------------------------------------------- */
+
+  const $ = function (id) { return document.getElementById(id); };
+  const TS = window.TaskStats;
+  const SCHEME_KEY = 'ts_scheme';
+  const SYNC_STATE_KEY = 'task_sync_state_v1';
+  const SCHEMES = [
+    { id: 'blau', label: 'Blau', dots: ['#184f95', '#3987e5', '#b7d3f6'] },
+    { id: 'gruen', label: 'Grün', dots: ['#19613a', '#27a55c', '#a6f0c0'] },
+    { id: 'lila', label: 'Lila', dots: ['#4b3a9c', '#8471e0', '#d6cffa'] },
+    { id: 'orange', label: 'Orange', dots: ['#8a3a12', '#d9661f', '#fbc49e'] }
+  ];
+  // Categorical slots in fixed order; categories past the eighth share gray.
+  const CAT_COLORS = ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300', '#9085e9', '#e66767'];
+  const CAT_NONE = '#5f5e59';
+  const WEEKDAYS = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+  const MONTHS = ['Jan', 'Feb', 'Mär', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dez'];
+
+  let serverRows = [];
+  let tab = 'overview';
+  let range = 'all';
+
+  function parseDay(day) {
+    const p = day.split('-').map(Number);
+    return new Date(p[0], p[1] - 1, p[2]);
+  }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function pct(v) { return Math.round(v * 100) + ' %'; }
+
+  /* ---------------------------------------------------------------- */
+  /* Data                                                              */
+  /* ---------------------------------------------------------------- */
+
+  // Server history, with any day this device still holds locally taking
+  // precedence — that copy is the freshest.
+  function history() {
+    const today = TS.activeDay();
+    const byDay = {};
+    serverRows.forEach(function (s) { byDay[s.day] = s; });
+    let syncState = {};
+    try { syncState = JSON.parse(localStorage.getItem(SYNC_STATE_KEY) || '{}'); } catch (e) {}
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || k.indexOf('goals:') !== 0) continue;
+      const day = k.slice(6);
+      if (day > today) continue;
+      let tasks = [];
+      try { tasks = JSON.parse(localStorage.getItem(k)) || []; } catch (e) {}
+      const moved = syncState[day] && Array.isArray(syncState[day].moved) ? syncState[day].moved : [];
+      byDay[day] = TS.dayStats({ day: day, tasks: tasks, moved: moved });
+    }
+    return Object.keys(byDay).sort().map(function (d) { return byDay[d]; });
+  }
+
+  async function refresh() {
+    try {
+      serverRows = await TS.fetchHistory();
+      $('tsStatus').textContent = '';
+      $('tsStatus').classList.remove('is-error');
+    } catch (e) {
+      // Offline: the lists on this device still cover the last days.
+      $('tsStatus').textContent = 'Verlauf konnte nicht geladen werden – zeige nur die Tage auf diesem Gerät.';
+      $('tsStatus').classList.add('is-error');
+    }
+    render();
+  }
+
+  function rangeStart(all) {
+    const today = TS.activeDay();
+    if (range === '7') return TS.addDays(today, -6);
+    if (range === '30') return TS.addDays(today, -29);
+    return all.length ? all[0].day : today;
+  }
+
+  // Days in a row with a score of at least 50 %. Today only extends a
+  // streak once it gets there; until then it doesn't break one either.
+  function isGoodDay(s) { return !!s && s.score != null && s.score >= 0.5; }
+
+  function currentStreak(byDay, today) {
+    let n = 0;
+    let day = today;
+    if (!isGoodDay(byDay[today])) day = TS.addDays(today, -1);
+    while (isGoodDay(byDay[day])) { n++; day = TS.addDays(day, -1); }
+    return n;
+  }
+
+  function longestStreak(byDay, from, to) {
+    let best = 0, run = 0;
+    for (let day = from; day <= to; day = TS.addDays(day, 1)) {
+      run = isGoodDay(byDay[day]) ? run + 1 : 0;
+      if (run > best) best = run;
+    }
+    return best;
+  }
+
+  function level(s) {
+    if (!s || s.score == null || s.done === 0) return 0;
+    const p = s.score * 100;
+    if (p >= 100) return 5;
+    if (p > 75) return 4;
+    if (p > 50) return 3;
+    if (p > 25) return 2;
+    return 1;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Render                                                            */
+  /* ---------------------------------------------------------------- */
+
+  function render() {
+    const all = history();
+    const today = TS.activeDay();
+    const from = rangeStart(all);
+    const byDay = {};
+    all.forEach(function (s) { byDay[s.day] = s; });
+    const inRange = all.filter(function (s) { return s.day >= from && s.day <= today; });
+
+    if (tab === 'overview') {
+      renderCards(inRange, byDay, from, today);
+      renderHeatmap(byDay, from, today, all);
+    } else {
+      renderCategories(inRange, all);
+    }
+  }
+
+  function unit(n, one, many) { return '<span class="ts-card-unit">' + (n === 1 ? one : many) + '</span>'; }
+
+  function renderCards(days, byDay, from, today) {
+    const planned = days.reduce(function (a, s) { return a + s.planned; }, 0);
+    const done = days.reduce(function (a, s) { return a + s.done; }, 0);
+    const withEntry = days.filter(function (s) { return s.score != null; });
+    const active = days.filter(function (s) { return s.done > 0; }).length;
+
+    $('tsDone').textContent = done;
+    $('tsDoneSub').textContent = planned ? 'von ' + planned + ' geplanten' : 'noch nichts geplant';
+
+    $('tsActive').innerHTML = active + unit(active, 'Tag', 'Tage');
+    $('tsActiveSub').textContent = withEntry.length ? 'von ' + withEntry.length + ' Tagen mit Tasks' : '';
+
+    const streak = currentStreak(byDay, today);
+    $('tsStreak').innerHTML = streak + unit(streak, 'Tag', 'Tage');
+
+    const longest = longestStreak(byDay, from, today);
+    $('tsLongest').innerHTML = longest + unit(longest, 'Tag', 'Tage');
+    $('tsLongestSub').textContent = range === 'all' ? 'seit Beginn' : 'im Zeitraum';
+
+    const hours = new Array(24).fill(0);
+    days.forEach(function (s) {
+      s.items.forEach(function (t) { if (t.done && t.doneAt) hours[new Date(t.doneAt).getHours()]++; });
+    });
+    const maxCount = Math.max.apply(null, hours);
+    if (maxCount > 0) {
+      const h = hours.indexOf(maxCount);
+      $('tsHour').innerHTML = h + unit(0, '', 'Uhr');
+      $('tsHourSub').textContent = maxCount + (maxCount === 1 ? ' Task' : ' Tasks') + ' zwischen ' + h + ' und ' + ((h + 1) % 24) + ' Uhr';
+    } else {
+      $('tsHour').textContent = '–';
+      $('tsHourSub').textContent = '';
+    }
+
+    if (withEntry.length) {
+      const avg = withEntry.reduce(function (a, s) { return a + s.score; }, 0) / withEntry.length;
+      $('tsRate').textContent = pct(avg);
+      $('tsRateSub').textContent = 'Ø über ' + withEntry.length + (withEntry.length === 1 ? ' Tag' : ' Tage');
+    } else {
+      $('tsRate').textContent = '–';
+      $('tsRateSub').textContent = '';
+    }
+  }
+
+  function renderHeatmap(byDay, from, today, all) {
+    // "Alle" shows at least twelve weeks so a young history still reads as
+    // a calendar; the shorter filters show exactly their days.
+    let start = from;
+    if (range === 'all') {
+      const twelveWeeks = TS.addDays(today, -83);
+      if (twelveWeeks < start) start = twelveWeeks;
+    }
+    const first = parseDay(start);
+    first.setDate(first.getDate() - ((first.getDay() + 6) % 7)); // back to Monday
+    const last = parseDay(today);
+    last.setDate(last.getDate() + (6 - ((last.getDay() + 6) % 7))); // on to Sunday
+
+    const cells = [];
+    const monthMarks = [];
+    let col = 0;
+    for (let d = new Date(first); d <= last; d.setDate(d.getDate() + 1)) {
+      const day = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+      const row = (d.getDay() + 6) % 7;
+      if (row === 0 && cells.length) col++;
+      if (d.getDate() <= 7 && row === 0) monthMarks.push({ col: col, label: MONTHS[d.getMonth()] });
+      const outside = day < start || day > today;
+      const s = byDay[day];
+      cells.push('<div class="ts-cell' + (outside ? ' is-outside' : '') + (day === today ? ' is-today' : '') + '"'
+        + (outside ? '' : ' data-day="' + day + '" data-level="' + level(s) + '"') + '></div>');
+    }
+    const weeks = col + 1;
+    if (!monthMarks.length || monthMarks[0].col > 2) {
+      monthMarks.unshift({ col: 0, label: MONTHS[first.getMonth()] });
+    }
+    // Drop month labels that would sit on top of each other.
+    const marks = monthMarks.filter(function (m, i, arr) { return i === 0 || m.col - arr[i - 1].col >= 3; });
+
+    const heat = $('tsHeat');
+    // Cells grow to fill the card on wide screens and stop at 12 px on
+    // narrow ones, where the heatmap scrolls sideways instead.
+    const avail = $('tsHeatScroll').clientWidth - 28;
+    const size = avail > 0 ? Math.max(12, Math.min(28, Math.floor((avail + 3) / weeks) - 3)) : 14;
+    heat.style.setProperty('--ts-cell', size + 'px');
+    heat.innerHTML =
+      '<div class="ts-months" style="grid-template-columns:repeat(' + weeks + ',var(--ts-cell))">'
+      + marks.map(function (m) { return '<span style="grid-column:' + (m.col + 1) + '">' + m.label + '</span>'; }).join('')
+      + '</div>'
+      + '<div class="ts-weekdays"><span>Mo</span><span></span><span>Mi</span><span></span><span>Fr</span><span></span><span>So</span></div>'
+      + '<div class="ts-grid" role="img" aria-label="Produktivität pro Tag">' + cells.join('') + '</div>';
+
+    $('tsLegend').innerHTML = [0, 1, 2, 3, 4, 5].map(function (l) {
+      return '<span style="background:' + (l ? 'var(--ts-' + l + ')' : 'var(--ts-empty)') + '" title="'
+        + ['kein Eintrag', '1–25 %', '26–50 %', '51–75 %', '76–99 %', '100 %'][l] + '"></span>';
+    }).join('');
+
+    const scroll = $('tsHeatScroll');
+    scroll.scrollLeft = scroll.scrollWidth;
+  }
+
+  function renderCategories(days, all) {
+    // Colours follow the category across filters: slots go by how many
+    // tasks each category has overall, not by the current range.
+    const totals = {};
+    all.forEach(function (s) {
+      s.items.forEach(function (t) { if (t.category) totals[t.category] = (totals[t.category] || 0) + 1; });
+    });
+    const order = Object.keys(totals).sort(function (a, b) { return totals[b] - totals[a] || a.localeCompare(b, 'de'); });
+    const colorOf = function (cat) {
+      const i = order.indexOf(cat);
+      return cat && i >= 0 && i < CAT_COLORS.length ? CAT_COLORS[i] : CAT_NONE;
+    };
+
+    const stats = {};
+    days.forEach(function (s) {
+      s.items.forEach(function (t) {
+        const key = t.category || '';
+        const e = stats[key] = stats[key] || { planned: 0, done: 0 };
+        e.planned++;
+        if (t.done) e.done++;
+      });
+    });
+    const keys = Object.keys(stats).sort(function (a, b) {
+      if (!a) return 1;
+      if (!b) return -1;
+      return stats[b].done - stats[a].done || a.localeCompare(b, 'de');
+    });
+    const list = $('tsCatList');
+    if (!keys.length) {
+      list.innerHTML = '<div class="tr-muted">Im Zeitraum gibt es noch keine Tasks.</div>';
+      return;
+    }
+    const maxDone = Math.max(1, Math.max.apply(null, keys.map(function (k) { return stats[k].done; })));
+    list.innerHTML = keys.map(function (k) {
+      const e = stats[k];
+      const color = k ? colorOf(k) : CAT_NONE;
+      return '<div class="ts-cat-row">'
+        + '<div class="ts-cat-name"><span class="ts-swatch" style="background:' + color + '"></span><span>' + (k ? '#' + esc(k) : 'Ohne Kategorie') + '</span></div>'
+        + '<div class="ts-cat-track"><div class="ts-cat-fill" style="width:' + (e.done / maxDone * 100).toFixed(1) + '%;background:' + color + '"></div></div>'
+        + '<div class="ts-cat-val"><strong>' + e.done + '</strong> erledigt · ' + pct(e.done / e.planned) + '</div>'
+        + '</div>';
+    }).join('')
+      + (order.length ? '' : '<div class="ts-hint" style="margin-top:10px">Schreib z. B. „Klausur lernen #uni“, dann erscheint #uni hier als eigene Kategorie.</div>');
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Tooltip                                                           */
+  /* ---------------------------------------------------------------- */
+
+  let pinned = null;
+
+  function tooltipHtml(day) {
+    const s = history().find(function (x) { return x.day === day; });
+    const d = parseDay(day);
+    const date = WEEKDAYS[d.getDay()] + ', ' + String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
+    if (!s || s.score == null) return '<div class="ts-tooltip-date">' + date + '</div><div>Kein Eintrag</div>';
+    return '<div class="ts-tooltip-date">' + date + '</div>'
+      + '<div><strong>' + s.done + ' von ' + s.planned + '</strong> Tasks erledigt</div>'
+      + '<div>Score ' + pct(s.score) + '</div>';
+  }
+
+  function showTooltip(cell) {
+    const tip = $('tsTooltip');
+    tip.innerHTML = tooltipHtml(cell.dataset.day);
+    tip.hidden = false;
+    const r = cell.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    let x = r.left + r.width / 2 - t.width / 2;
+    x = Math.max(8, Math.min(window.innerWidth - t.width - 8, x));
+    let y = r.top - t.height - 8;
+    if (y < 8) y = r.bottom + 8;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  }
+  function hideTooltip() { $('tsTooltip').hidden = true; pinned = null; }
+
+  $('tsHeat').addEventListener('mouseover', function (e) {
+    const cell = e.target.closest('.ts-cell[data-day]');
+    if (cell && !pinned) showTooltip(cell);
+  });
+  $('tsHeat').addEventListener('mouseout', function (e) {
+    if (!pinned && e.target.closest('.ts-cell[data-day]')) $('tsTooltip').hidden = true;
+  });
+  // Tap on touch screens: pin the tooltip until the next tap elsewhere.
+  $('tsHeat').addEventListener('click', function (e) {
+    const cell = e.target.closest('.ts-cell[data-day]');
+    if (!cell) return;
+    e.stopPropagation();
+    if (pinned === cell) { hideTooltip(); return; }
+    pinned = cell;
+    showTooltip(cell);
+  });
+  document.addEventListener('click', function () { if (pinned) hideTooltip(); });
+  $('tsHeatScroll').addEventListener('scroll', hideTooltip, { passive: true });
+  window.addEventListener('scroll', function () { if (pinned) hideTooltip(); }, { passive: true });
+
+  /* ---------------------------------------------------------------- */
+  /* Controls                                                          */
+  /* ---------------------------------------------------------------- */
+
+  document.querySelectorAll('[data-ts-tab]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      tab = b.dataset.tsTab;
+      document.querySelectorAll('[data-ts-tab]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+      $('tsOverview').hidden = tab !== 'overview';
+      $('tsCategories').hidden = tab !== 'categories';
+      hideTooltip();
+      render();
+    });
+  });
+
+  document.querySelectorAll('[data-ts-range]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      range = b.dataset.tsRange;
+      document.querySelectorAll('[data-ts-range]').forEach(function (x) { x.classList.toggle('is-active', x === b); });
+      hideTooltip();
+      render();
+    });
+  });
+
+  function applyScheme(id) {
+    if (!SCHEMES.some(function (s) { return s.id === id; })) id = 'blau';
+    $('tsSection').dataset.scheme = id;
+    $('tsSchemes').innerHTML = SCHEMES.map(function (s) {
+      return '<button type="button" class="ts-scheme' + (s.id === id ? ' is-active' : '') + '" data-scheme="' + s.id + '">'
+        + '<span class="ts-scheme-dots">' + s.dots.map(function (c) { return '<span style="background:' + c + '"></span>'; }).join('') + '</span>'
+        + s.label + '</button>';
+    }).join('');
+  }
+
+  let savedScheme = 'blau';
+  try { savedScheme = localStorage.getItem(SCHEME_KEY) || 'blau'; } catch (e) {}
+  applyScheme(savedScheme);
+
+  $('tsGear').addEventListener('click', function (e) {
+    e.stopPropagation();
+    const open = $('tsSettings').hidden;
+    $('tsSettings').hidden = !open;
+    $('tsGear').setAttribute('aria-expanded', String(open));
+  });
+  $('tsSettings').addEventListener('click', function (e) {
+    e.stopPropagation();
+    const b = e.target.closest('[data-scheme]');
+    if (!b) return;
+    try { localStorage.setItem(SCHEME_KEY, b.dataset.scheme); } catch (err) {}
+    applyScheme(b.dataset.scheme);
+  });
+  document.addEventListener('click', function () {
+    if (!$('tsSettings').hidden) {
+      $('tsSettings').hidden = true;
+      $('tsGear').setAttribute('aria-expanded', 'false');
+    }
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Wiring                                                            */
+  /* ---------------------------------------------------------------- */
+
+  let localTimer = null;
+  window.addEventListener('goals-changed', function () {
+    clearTimeout(localTimer);
+    localTimer = setTimeout(render, 150);
+  });
+  window.addEventListener('goals-booted', refresh);
+  // The heatmap sizes itself from the card width, so redraw when it
+  // changes: on resize and when switching back to the dashboard tab.
+  let lastWidth = 0;
+  function renderIfResized() {
+    const w = $('tsHeatScroll').clientWidth;
+    if (w && w !== lastWidth) { lastWidth = w; render(); }
+  }
+  let resizeTimer = null;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(renderIfResized, 150);
+  });
+  document.querySelectorAll('.tab-btn[data-view="dashboard"]').forEach(function (b) {
+    b.addEventListener('click', function () { setTimeout(renderIfResized, 0); });
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && !document.body.classList.contains('is-locked')) refresh();
+  });
+
+  render();
 })();
 </script>
 
