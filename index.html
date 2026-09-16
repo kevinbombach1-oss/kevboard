@@ -1156,6 +1156,80 @@
     color: var(--text-tertiary);
   }
   .tr-synced.is-off { color: var(--warning); }
+
+  /* ---------------------------------------------------------------- */
+  /* Laufen view                                                       */
+  /* ---------------------------------------------------------------- */
+
+  .rn-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .rn-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .rn-field-wide { grid-column: 1 / -1; }
+  .rn-field label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-tertiary);
+  }
+  .rn-field .goal-input { min-width: 0; width: 100%; color-scheme: dark; }
+  .rn-pace-row {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+  }
+  .rn-pace {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .rn-pace strong { color: var(--text-primary); font-size: 18px; }
+
+  .rn-list { list-style: none; margin: 0; padding: 0; }
+  .rn-row {
+    display: grid;
+    grid-template-columns: 58px repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    align-items: baseline;
+    padding: 11px 2px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rn-row:last-child { border-bottom: none; }
+  .rn-row-head {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-tertiary);
+  }
+  .rn-date { font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); }
+  .rn-dist { font-weight: 700; }
+  .rn-muted { color: var(--text-tertiary); }
+  .rn-src {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(252, 82, 0, 0.16);
+    color: #FC8A4A;
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    vertical-align: middle;
+  }
+
+  @media (max-width: 480px) {
+    .rn-form { grid-template-columns: 1fr; }
+    .rn-row { grid-template-columns: 50px repeat(4, minmax(0, 1fr)); font-size: 12px; }
+  }
 </style>
 <style>
 #poCoachApp {
@@ -2369,6 +2443,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
 <div class="tab-bar" role="tablist">
   <button type="button" class="tab-btn is-active" data-view="dashboard" role="tab">Dashboard</button>
   <button type="button" class="tab-btn" data-view="training" role="tab">Training</button>
+  <button type="button" class="tab-btn" data-view="laufen" role="tab">Laufen</button>
 </div>
 
 <div class="view is-active" id="view-dashboard">
@@ -2834,6 +2909,63 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     </div>
   </div>
 </div><!-- /view-training -->
+
+<div class="view" id="view-laufen">
+  <div class="section">
+    <div class="section-title">Lauf eintragen</div>
+    <!-- Manual fallback; Strava-synced runs land in the same table later. -->
+    <form class="gm-card rn-form" id="rnForm" novalidate>
+      <div class="rn-field">
+        <label for="rnDate">Datum</label>
+        <input type="date" class="goal-input" id="rnDate" required>
+      </div>
+      <div class="rn-field">
+        <label for="rnType">Art</label>
+        <select class="goal-input" id="rnType">
+          <option value="easy">Locker</option>
+          <option value="long">Lang</option>
+          <option value="tempo">Tempo</option>
+          <option value="interval">Intervall</option>
+          <option value="race">Wettkampf</option>
+        </select>
+      </div>
+      <div class="rn-field">
+        <label for="rnDistance">Distanz (km)</label>
+        <input type="text" class="goal-input" id="rnDistance" inputmode="decimal" placeholder="10,0" autocomplete="off">
+      </div>
+      <div class="rn-field">
+        <label for="rnDuration">Zeit (h:mm:ss)</label>
+        <input type="text" class="goal-input" id="rnDuration" inputmode="numeric" placeholder="58:30" autocomplete="off">
+      </div>
+      <div class="rn-field">
+        <label for="rnHr">Ø-HF (optional)</label>
+        <input type="number" class="goal-input" id="rnHr" min="60" max="240" inputmode="numeric" placeholder="150">
+      </div>
+      <div class="rn-field">
+        <label for="rnElevation">Höhenmeter (optional)</label>
+        <input type="number" class="goal-input" id="rnElevation" min="0" max="10000" inputmode="numeric" placeholder="40">
+      </div>
+      <div class="rn-field rn-field-wide">
+        <label for="rnNotes">Notizen (optional)</label>
+        <input type="text" class="goal-input" id="rnNotes" maxlength="2000" autocomplete="off">
+      </div>
+      <div class="rn-pace-row">
+        <span class="rn-pace">Pace <strong id="rnPace">–:––</strong> /km</span>
+        <button type="submit" class="goal-btn-primary" id="rnSave">Speichern</button>
+      </div>
+      <div class="gm-status rn-field-wide" id="rnStatus"></div>
+    </form>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Letzte Läufe</div>
+    <div class="gm-card">
+      <ul class="rn-list" id="rnList">
+        <li class="tr-muted">Lade Läufe…</li>
+      </ul>
+    </div>
+  </div>
+</div><!-- /view-laufen -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
 
@@ -5595,6 +5727,158 @@ const CONFIG = {
   window.addEventListener('beforeunload', pcFlushPushOnUnload);
   document.addEventListener('visibilitychange', () => {
     if (document.hidden) pcFlushPushOnUnload();
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  // ============================================================
+  // LAUFEN — runs live in public.runs (metres / seconds). Pace and km
+  // are only derived here. Manual entries are the fallback until the
+  // Strava sync writes source = 'strava' rows into the same table.
+  // ============================================================
+  const $ = (id) => document.getElementById(id);
+  let sb = null;
+
+  function parseKm(text) {
+    const v = parseFloat(String(text).trim().replace(',', '.'));
+    return isFinite(v) && v > 0 ? v : null;
+  }
+
+  // Accepts "58:30", "1:02:15" or plain minutes like "45".
+  function parseDuration(text) {
+    const parts = String(text).trim().split(':');
+    if (!parts[0] || parts.length > 3 || parts.some(p => !/^\d+$/.test(p))) return null;
+    const nums = parts.map(Number);
+    let sec;
+    if (nums.length === 1) sec = nums[0] * 60;
+    else if (nums.length === 2) sec = nums[0] * 60 + nums[1];
+    else sec = nums[0] * 3600 + nums[1] * 60 + nums[2];
+    if (nums.length > 1 && nums[nums.length - 1] >= 60) return null;
+    if (nums.length === 3 && nums[1] >= 60) return null;
+    return sec > 0 ? sec : null;
+  }
+
+  function fmtDuration(sec) {
+    sec = Math.round(sec);
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(s).padStart(2, '0');
+  }
+
+  function fmtPace(secPerKm) {
+    if (!isFinite(secPerKm) || secPerKm <= 0) return '–:––';
+    const r = Math.round(secPerKm);
+    return Math.floor(r / 60) + ':' + String(r % 60).padStart(2, '0');
+  }
+
+  function fmtKm(m) { return (m / 1000).toFixed(2).replace('.', ','); }
+
+  function todayInput() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  function status(text, isError) {
+    $('rnStatus').textContent = text || '';
+    $('rnStatus').classList.toggle('is-error', !!isError);
+  }
+
+  function updatePace() {
+    const km = parseKm($('rnDistance').value);
+    const sec = parseDuration($('rnDuration').value);
+    $('rnPace').textContent = km && sec ? fmtPace(sec / km) : '–:––';
+  }
+
+  function renderList(runs) {
+    const list = $('rnList');
+    if (!runs.length) {
+      list.innerHTML = '<li class="tr-muted">Noch keine Läufe.</li>';
+      return;
+    }
+    const head = '<li class="rn-row rn-row-head"><span>Datum</span><span>km</span><span>Zeit</span><span>Pace</span><span>Ø-HF</span></li>';
+    list.innerHTML = head + runs.map(r => {
+      const d = new Date(r.performed_at);
+      const date = String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.';
+      const pace = r.pace_s_per_km != null ? Number(r.pace_s_per_km) : r.duration_s / (r.distance_m / 1000);
+      return '<li class="rn-row">'
+        + '<span class="rn-date">' + date + '</span>'
+        + '<span class="rn-dist">' + fmtKm(r.distance_m)
+        +   (r.source === 'strava' ? '<span class="rn-src">STRAVA</span>' : '') + '</span>'
+        + '<span>' + fmtDuration(r.duration_s) + '</span>'
+        + '<span>' + fmtPace(pace) + '</span>'
+        + '<span class="' + (r.avg_hr ? '' : 'rn-muted') + '">' + (r.avg_hr || '–') + '</span>'
+        + '</li>';
+    }).join('');
+  }
+
+  async function loadRuns() {
+    if (!sb) return;
+    const { data, error } = await sb.from('runs')
+      .select('id, performed_at, distance_m, duration_s, pace_s_per_km, avg_hr, source')
+      .order('performed_at', { ascending: false })
+      .limit(20);
+    if (error) {
+      $('rnList').innerHTML = '<li class="tr-muted">Läufe konnten nicht geladen werden: ' + error.message.replace(/</g, '&lt;') + '</li>';
+      return;
+    }
+    renderList(data);
+  }
+
+  $('rnDate').value = todayInput();
+  $('rnDistance').addEventListener('input', updatePace);
+  $('rnDuration').addEventListener('input', updatePace);
+
+  $('rnForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!sb) { status('Nicht verbunden.', true); return; }
+
+    const dateVal = $('rnDate').value;
+    const km = parseKm($('rnDistance').value);
+    const sec = parseDuration($('rnDuration').value);
+    const hrText = $('rnHr').value.trim();
+    const elevText = $('rnElevation').value.trim();
+    const hr = hrText ? Number(hrText) : null;
+    const elev = elevText ? Number(elevText) : null;
+
+    if (!dateVal) return status('Bitte ein Datum wählen.', true);
+    if (!km || km < 0.1 || km > 500) return status('Distanz in km eingeben, z. B. 10,5.', true);
+    if (!sec || sec < 30) return status('Zeit als mm:ss oder h:mm:ss eingeben.', true);
+    if (hr != null && !(Number.isInteger(hr) && hr >= 60 && hr <= 240)) return status('Ø-HF muss zwischen 60 und 240 liegen.', true);
+    if (elev != null && !(Number.isInteger(elev) && elev >= 0 && elev <= 10000)) return status('Höhenmeter müssen zwischen 0 und 10000 liegen.', true);
+
+    // Noon local time, so the run never slips to a neighbouring day.
+    const [y, m, d] = dateVal.split('-').map(Number);
+    const row = {
+      performed_at: new Date(y, m - 1, d, 12).toISOString(),
+      distance_m: Math.round(km * 1000),
+      duration_s: sec,
+      run_type: $('rnType').value,
+      avg_hr: hr,
+      elevation_gain_m: elev,
+      notes: $('rnNotes').value.trim() || null,
+      source: 'manual'
+    };
+
+    $('rnSave').disabled = true;
+    status('Speichere…');
+    const { error } = await sb.from('runs').insert(row);
+    $('rnSave').disabled = false;
+    if (error) return status('Speichern fehlgeschlagen: ' + error.message, true);
+
+    ['rnDistance', 'rnDuration', 'rnHr', 'rnElevation', 'rnNotes'].forEach(id => { $(id).value = ''; });
+    updatePace();
+    status('Gespeichert.');
+    loadRuns();
+  });
+
+  window.addEventListener('po-auth-ready', (e) => {
+    sb = e.detail;
+    loadRuns();
   });
 })();
 </script>
