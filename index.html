@@ -4368,9 +4368,6 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   /* Boot                                                              */
   /* ---------------------------------------------------------------- */
 
-  runStreakCheck();
-  runRollover();
-
   makeAddHandlers(
     document.getElementById('goalInput'),
     document.getElementById('goalAddBtn'),
@@ -4389,14 +4386,349 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     loadTomorrow
   );
 
-  loadToday();
-  loadTomorrow();
-  renderStreak();
-
   updateDayBar();
   setInterval(updateDayBar, 60 * 1000);
 
-  Ticker.start();
+  // Tasks sync between devices (see the task sync script further down).
+  // The rollover waits for the synced copy to land in localStorage, so a
+  // device that was offline for a day doesn't carry its stale list forward.
+  let goalsBooted = false;
+
+  function bootGoals() {
+    if (goalsBooted) return;
+    goalsBooted = true;
+    runStreakCheck();
+    runRollover();
+    loadToday();
+    loadTomorrow();
+    renderStreak();
+    Ticker.start();
+    window.dispatchEvent(new CustomEvent('goals-booted'));
+  }
+
+  window.addEventListener('tasks-synced', bootGoals);
+  // Safety net: once the page is unlocked, never leave the list blank.
+  setTimeout(function () {
+    if (!document.body.classList.contains('is-locked')) bootGoals();
+  }, 15000);
+
+  // Another device changed a day: redraw from storage.
+  window.addEventListener('goals-remote-update', function () {
+    if (!goalsBooted) return;
+    loadToday();
+    loadTomorrow();
+  });
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- */
+  /* Task sync — mirrors every `goals:YYYY-MM-DD` list to              */
+  /* public.task_days, so tasks follow you between devices and past    */
+  /* days survive the 6 AM rollover as history for the statistics.     */
+  /* The task list itself keeps reading and writing localStorage.      */
+  /* ---------------------------------------------------------------- */
+
+  const PREFIX = 'goals:';
+  const STATE_KEY = 'task_sync_state_v1';   // day -> { json, moved, at, rolled }
+  const DEVICE_KEY = 'task_device_id';
+  const PULL_DAYS = 14;
+  const POLL_MS = 60 * 1000;
+
+  let sb = null;
+  let booted = false;
+  let pushTimer = null;
+  let pulling = null;
+
+  function readJson(key, fallback) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw == null ? fallback : JSON.parse(raw);
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function writeJson(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); } catch (e) {}
+  }
+
+  const deviceId = (function () {
+    let id = readJson(DEVICE_KEY, null);
+    if (!id) {
+      id = 'd_' + Math.random().toString(36).slice(2, 10);
+      writeJson(DEVICE_KEY, id);
+    }
+    return id;
+  })();
+
+  // Same 6 AM day boundary as the task list.
+  function dateString(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  function activeDay() {
+    const now = new Date();
+    if (now.getHours() < 6) now.setDate(now.getDate() - 1);
+    return dateString(now);
+  }
+  function addDays(day, n) {
+    const p = day.split('-').map(Number);
+    return dateString(new Date(p[0], p[1] - 1, p[2] + n));
+  }
+
+  function localDays() {
+    const days = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf(PREFIX) === 0) days.push(k.slice(PREFIX.length));
+    }
+    return days;
+  }
+  function localList(day) { return readJson(PREFIX + day, null); }
+
+  // JSON with sorted keys. Postgres reorders jsonb keys, so a plain
+  // stringify would make every round trip look like a change.
+  function canon(value) {
+    if (Array.isArray(value)) return '[' + value.map(canon).join(',') + ']';
+    if (value && typeof value === 'object') {
+      return '{' + Object.keys(value).sort().map(function (k) {
+        return JSON.stringify(k) + ':' + canon(value[k]);
+      }).join(',') + '}';
+    }
+    return JSON.stringify(value === undefined ? null : value);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Push                                                              */
+  /* ---------------------------------------------------------------- */
+
+  // "Push to tomorrow" removes unfinished tasks from a day. They were still
+  // planned for it, so they are kept aside as moved: gone from this day's
+  // list and present on the next day's.
+  function movedFor(day, prev, list) {
+    const moved = prev && Array.isArray(prev.moved) ? prev.moved.slice() : [];
+    const now = new Set(list.map(function (t) { return t.text; }));
+    if (prev) {
+      const next = new Set((localList(addDays(day, 1)) || []).map(function (t) { return t.text; }));
+      JSON.parse(prev.json).forEach(function (t) {
+        const gone = !now.has(t.text) && next.has(t.text);
+        if (!t.done && gone && !moved.some(function (m) { return m.text === t.text; })) {
+          moved.push({ text: t.text, priority: t.priority || null });
+        }
+      });
+    }
+    // Pulled back into the day: planned there again, no longer moved.
+    return moved.filter(function (m) { return !now.has(m.text); });
+  }
+
+  async function pushChanged() {
+    if (!sb) return;
+    const state = readJson(STATE_KEY, {});
+    const rows = [];
+    localDays().forEach(function (day) {
+      const list = localList(day);
+      if (!Array.isArray(list)) return;
+      const prev = state[day];
+      if (prev && prev.json === canon(list)) return;
+      rows.push({
+        day: day,
+        tasks: list,
+        moved: movedFor(day, prev, list),
+        updated_at: new Date().toISOString(),
+        updated_by: deviceId
+      });
+    });
+    if (!rows.length) return;
+
+    const { error } = await sb.from('task_days').upsert(rows, { onConflict: 'day' });
+    if (error) return; // retried on the next change or poll
+
+    // Re-read: a pull may have landed while the upsert was in flight.
+    const fresh = readJson(STATE_KEY, {});
+    rows.forEach(function (r) {
+      fresh[r.day] = Object.assign({}, fresh[r.day], {
+        json: canon(r.tasks),
+        moved: r.moved
+      });
+    });
+    writeJson(STATE_KEY, fresh);
+  }
+
+  function schedulePush() {
+    clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushChanged, 400);
+  }
+
+  window.addEventListener('goals-changed', function (e) {
+    if (e.detail && e.detail.remote) return;
+    if (booted) schedulePush();
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Pull                                                              */
+  /* ---------------------------------------------------------------- */
+
+  // Both devices changed the same day since the last sync: keep the remote
+  // list and add the tasks only this device knows about.
+  function mergeLists(remote, local) {
+    const merged = remote.slice();
+    local.forEach(function (t) {
+      if (!merged.some(function (m) { return m.text === t.text; })) merged.push(t);
+    });
+    return merged;
+  }
+
+  function pull() {
+    if (!sb) return Promise.resolve(false);
+    if (pulling) return pulling;
+    pulling = (async function () {
+      const today = activeDay();
+      const { data, error } = await sb.from('task_days')
+        .select('day, tasks, moved, rolled_over')
+        .gte('day', addDays(today, -PULL_DAYS));
+      if (error) return false;
+
+      const state = readJson(STATE_KEY, {});
+      let changed = false;
+      (data || []).forEach(function (r) {
+        // Earlier days another device already carried forward are history
+        // only. A local copy of one is stale: carrying or uploading it would
+        // duplicate tasks or undo what was ticked off elsewhere.
+        if (r.day < today && r.rolled_over) {
+          if (localList(r.day) != null) {
+            try { localStorage.removeItem(PREFIX + r.day); } catch (err) {}
+          }
+          state[r.day] = Object.assign({}, state[r.day], { rolled: true });
+          return;
+        }
+
+        // Versions are compared by content, never by timestamp: device
+        // clocks drift, and a phone a minute behind would lose every edit.
+        const prev = state[r.day];
+        const remoteJson = canon(r.tasks);
+        const moved = Array.isArray(r.moved) ? r.moved : [];
+        if (prev && prev.json === remoteJson) {
+          prev.moved = moved;
+          return;
+        }
+
+        const local = localList(r.day);
+        const localJson = local ? canon(local) : null;
+        const localDirty = local != null && (!prev || prev.json !== localJson);
+        const next = localDirty ? mergeLists(r.tasks, local) : r.tasks;
+
+        if (canon(next) !== localJson) {
+          writeJson(PREFIX + r.day, next);
+          changed = true;
+        }
+        state[r.day] = Object.assign({}, prev, { json: remoteJson, moved: moved });
+      });
+      writeJson(STATE_KEY, state);
+
+      if (changed) {
+        window.dispatchEvent(new CustomEvent('goals-changed', { detail: { remote: true } }));
+        window.dispatchEvent(new CustomEvent('goals-remote-update'));
+      }
+      return true;
+    })().finally(function () { pulling = null; });
+    return pulling;
+  }
+
+  // Days that were synced and are now gone locally were carried forward by
+  // this device's rollover; flag them so other devices leave them alone.
+  async function markRolledOver() {
+    const state = readJson(STATE_KEY, {});
+    const today = activeDay();
+    const days = Object.keys(state).filter(function (day) {
+      return day < today && !state[day].rolled && localList(day) == null;
+    });
+    if (days.length) {
+      const { error } = await sb.from('task_days').update({ rolled_over: true }).in('day', days);
+      if (error) return;
+    }
+    const fresh = readJson(STATE_KEY, {});
+    const cutoff = addDays(today, -PULL_DAYS * 2);
+    Object.keys(fresh).forEach(function (day) {
+      if (days.indexOf(day) !== -1) fresh[day].rolled = true;
+      if (day < cutoff) delete fresh[day];
+    });
+    writeJson(STATE_KEY, fresh);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Boot                                                              */
+  /* ---------------------------------------------------------------- */
+
+  // Pull, then upload days the server doesn't have yet (so they are kept
+  // before the rollover deletes them locally), then let the list boot.
+  window.addEventListener('po-auth-ready', async function (e) {
+    sb = e.detail;
+    try {
+      await pull();
+      await pushChanged();
+    } catch (err) {
+      // Offline or not reachable: the list still works from localStorage.
+    }
+    booted = true;
+    window.dispatchEvent(new CustomEvent('tasks-synced'));
+  });
+
+  window.addEventListener('goals-booted', async function () {
+    if (!sb) return;
+    try {
+      await markRolledOver();
+      await pushChanged();
+    } catch (err) {}
+    setInterval(function () {
+      if (!document.hidden) pull().then(pushChanged);
+    }, POLL_MS);
+  });
+
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden && booted && sb) pull().then(pushChanged);
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Statistics data                                                   */
+  /* ---------------------------------------------------------------- */
+
+  // First #hashtag in a task's text, lower-cased, or null.
+  function categoryOf(text) {
+    const m = /(^|\s)#([\p{L}\p{N}][\p{L}\p{N}_-]*)/u.exec(text || '');
+    return m ? m[2].toLowerCase() : null;
+  }
+
+  // One day's figures. Only top-level tasks count; a task with steps is done
+  // once all steps are. Moved tasks count as planned but not done. A day
+  // without planned tasks has no score.
+  function dayStats(row) {
+    const tasks = Array.isArray(row.tasks) ? row.tasks : [];
+    const moved = Array.isArray(row.moved) ? row.moved : [];
+    const items = tasks.map(function (t) {
+      return { text: t.text, done: !!t.done, doneAt: t.done && t.doneAt ? t.doneAt : null, category: categoryOf(t.text) };
+    }).concat(moved.map(function (m) {
+      return { text: m.text, done: false, doneAt: null, category: categoryOf(m.text), moved: true };
+    }));
+    const planned = items.length;
+    const done = items.filter(function (t) { return t.done; }).length;
+    return { day: row.day, planned: planned, done: done, score: planned ? done / planned : null, items: items };
+  }
+
+  // Every day up to today, oldest first.
+  async function fetchHistory() {
+    if (!sb) throw new Error('Nicht angemeldet');
+    const { data, error } = await sb.from('task_days')
+      .select('day, tasks, moved')
+      .lte('day', activeDay())
+      .order('day', { ascending: true });
+    if (error) throw error;
+    return (data || []).map(dayStats);
+  }
+
+  window.TaskStats = { fetchHistory: fetchHistory, dayStats: dayStats, categoryOf: categoryOf, activeDay: activeDay, addDays: addDays };
 })();
 </script>
 
