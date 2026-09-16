@@ -1161,37 +1161,176 @@
   /* Laufen view                                                       */
   /* ---------------------------------------------------------------- */
 
-  .rn-form {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
+  #view-laufen {
+    /* Chart palette, validated against the dark card surface. */
+    --rn-series: #3987e5;
+    --rn-faster: #3987e5;
+    --rn-slower: #e05a5a;
+    --rn-neutral: #383835;
+    --rn-z1: #184f95;
+    --rn-z2: #256abf;
+    --rn-z3: #3987e5;
+    --rn-z4: #6da7ec;
+    --rn-z5: #b7d3f6;
+    --rn-good: #0ca30c;
+    --rn-warning: #fab219;
+    --rn-critical: #d03b3b;
+    --rn-grid: rgba(255, 255, 255, 0.06);
   }
-  .rn-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-  .rn-field-wide { grid-column: 1 / -1; }
-  .rn-field label {
-    font-size: 10.5px;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
+
+  .rn-subnav {
+    display: flex;
+    gap: 4px;
+    width: fit-content;
+    margin-bottom: 16px;
+    padding: 3px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.035);
+  }
+  .rn-subnav-btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 8px;
+    background: none;
     color: var(--text-tertiary);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
   }
-  .rn-field .goal-input { min-width: 0; width: 100%; color-scheme: dark; }
-  .rn-pace-row {
-    grid-column: 1 / -1;
+  .rn-subnav-btn:hover { color: var(--text-secondary); }
+  .rn-subnav-btn.is-active { background: rgba(255, 255, 255, 0.08); color: var(--text-primary); }
+
+  .rn-grid-2 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 0 16px;
+  }
+  .rn-grid-2 > .gm-card { min-width: 0; }
+
+  .rn-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+  }
+  .rn-card-head .gm-eyebrow { margin-bottom: 0; }
+  .rn-card-meta { font-size: 11px; color: var(--text-tertiary); }
+
+  .rn-hint { font-size: 11px; color: var(--text-tertiary); line-height: 1.5; }
+  .rn-hint-block { margin: -6px 2px 0; }
+  .rn-empty { font-size: 12px; color: var(--text-tertiary); font-style: italic; padding: 18px 0; text-align: center; }
+  .rn-est {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px dashed rgba(255, 255, 255, 0.28);
+    color: var(--text-secondary);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+
+  /* Strava card */
+  .rn-strava {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 12px;
+    gap: 14px;
     flex-wrap: wrap;
-    margin-top: 4px;
   }
-  .rn-pace {
-    font-family: var(--font-mono);
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-variant-numeric: tabular-nums;
+  .rn-strava-text { min-width: 0; }
+  .rn-strava-line { font-size: 13px; color: var(--text-secondary); }
+  .rn-strava-line.is-error { color: var(--danger); }
+  .rn-strava-actions { display: flex; align-items: center; gap: 12px; }
+  .rn-link {
+    border: none;
+    background: none;
+    color: var(--text-tertiary);
+    font-family: inherit;
+    font-size: 12px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
   }
-  .rn-pace strong { color: var(--text-primary); font-size: 18px; }
+  .rn-link:hover { color: var(--text-secondary); }
 
+  /* Goal card */
+  .rn-goal-main {
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .rn-goal-sub { margin-top: 4px; font-size: 13px; color: var(--text-secondary); }
+  .rn-goal-sub strong { color: var(--text-primary); }
+  .rn-goal-bar {
+    position: relative;
+    height: 8px;
+    margin: 16px 0 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .rn-goal-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--rn-series);
+    transition: width 0.4s ease;
+  }
+  .rn-goal-fill.is-done { background: var(--rn-good); }
+  .rn-goal-mark {
+    position: absolute;
+    top: -4px;
+    bottom: -4px;
+    right: 0;
+    width: 2px;
+    background: var(--text-secondary);
+  }
+  .rn-goal-foot { font-size: 11px; color: var(--text-tertiary); line-height: 1.5; }
+
+  /* Charts */
+  .rn-chart { position: relative; width: 100%; }
+  .rn-chart svg { display: block; width: 100%; overflow: visible; }
+  .rn-axis { fill: var(--text-tertiary); font-size: 10px; font-family: var(--font-mono); }
+  .rn-gridline { stroke: var(--rn-grid); stroke-width: 1; }
+  .rn-line { fill: none; stroke: var(--rn-series); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .rn-dot { fill: var(--rn-series); stroke: #0f0f10; stroke-width: 2; }
+  .rn-bar { fill: var(--rn-series); }
+  .rn-hit { fill: transparent; cursor: default; }
+  .rn-bar-hover { opacity: 0.75; }
+  .rn-crosshair { stroke: rgba(255, 255, 255, 0.35); stroke-width: 1; pointer-events: none; }
+  .rn-series-label { fill: var(--text-secondary); font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
+
+  .rn-tooltip {
+    position: fixed;
+    z-index: 50;
+    pointer-events: none;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(20, 20, 22, 0.96);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .rn-tooltip .rn-tt-muted { color: var(--text-tertiary); }
+
+  .rn-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-bottom: 8px; font-size: 11px; color: var(--text-secondary); }
+  .rn-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .rn-swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  /* Run list */
   .rn-list { list-style: none; margin: 0; padding: 0; }
   .rn-row {
     display: grid;
@@ -1204,6 +1343,8 @@
     font-variant-numeric: tabular-nums;
   }
   .rn-row:last-child { border-bottom: none; }
+  .rn-row-link { cursor: pointer; border-radius: 8px; }
+  .rn-row-link:hover, .rn-row-link:focus-visible { background: rgba(255, 255, 255, 0.04); outline: none; }
   .rn-row-head {
     font-size: 10px;
     text-transform: uppercase;
@@ -1226,9 +1367,147 @@
     vertical-align: middle;
   }
 
+  /* Manual form */
+  .rn-manual { margin-bottom: 28px; }
+  .rn-manual summary {
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding: 6px 2px 12px;
+  }
+  .rn-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .rn-hr-form .rn-form { margin-top: 8px; }
+  .rn-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .rn-field-wide { grid-column: 1 / -1; }
+  .rn-field label {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-tertiary);
+  }
+  .rn-field .goal-input { min-width: 0; width: 100%; color-scheme: dark; }
+  .rn-pace-row {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+  .rn-pace {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+  .rn-pace strong { color: var(--text-primary); font-size: 18px; }
+
+  /* Detail */
+  .rn-back {
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 4px 0 12px;
+  }
+  .rn-back:hover { color: var(--text-primary); }
+  .rn-detail-head { margin-bottom: 14px; }
+  .rn-detail-title { margin: 0; font-size: 22px; letter-spacing: -0.02em; }
+
+  .rn-tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .rn-tile {
+    padding: 14px 16px;
+    border-radius: 14px;
+    background: var(--card-bg);
+    min-width: 0;
+  }
+  .rn-tile-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    color: var(--text-tertiary);
+    margin-bottom: 6px;
+  }
+  .rn-tile-value {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .rn-tile-sub { margin-top: 4px; font-size: 11px; color: var(--text-tertiary); line-height: 1.4; }
+
+  .rn-map-card { padding: 0; }
+  .rn-map { height: 320px; border-radius: var(--card-radius); background: #111; }
+  /* OSM's light tiles, inverted to sit in the dark dashboard. */
+  .rn-map .rn-tiles-dark { filter: invert(1) hue-rotate(180deg) brightness(0.85) contrast(0.9); }
+  .rn-map .leaflet-control-attribution { background: rgba(0, 0, 0, 0.55); color: #aaa; font-size: 9px; }
+  .rn-map .leaflet-control-attribution a { color: #ccc; }
+
+  .rn-table-wrap { overflow-x: auto; }
+  .rn-table { width: 100%; border-collapse: collapse; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+  .rn-table th {
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-tertiary);
+    padding: 0 8px 8px 0;
+  }
+  .rn-table td { padding: 7px 8px 7px 0; border-top: 1px solid rgba(255, 255, 255, 0.05); white-space: nowrap; }
+  .rn-table td.rn-num, .rn-table th.rn-num { text-align: right; }
+  .rn-pace-cell { display: flex; align-items: center; gap: 8px; }
+  .rn-pace-bar { flex: 1; min-width: 40px; height: 8px; border-radius: 2px; background: rgba(255, 255, 255, 0.04); position: relative; }
+  .rn-pace-bar span { position: absolute; top: 0; bottom: 0; border-radius: 2px; }
+  .rn-key { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin: 0 4px 0 8px; }
+  .rn-key-fast { background: var(--rn-faster); }
+  .rn-key-slow { background: var(--rn-slower); }
+
+  .rn-zone-rows { display: flex; flex-direction: column; gap: 8px; }
+  .rn-zone-row {
+    display: grid;
+    grid-template-columns: 34px 1fr 92px;
+    gap: 10px;
+    align-items: center;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+  }
+  .rn-zone-name { font-weight: 700; color: var(--text-secondary); }
+  .rn-zone-track { height: 12px; border-radius: 3px; background: rgba(255, 255, 255, 0.04); overflow: hidden; }
+  .rn-zone-fill { height: 100%; border-radius: 0 4px 4px 0; }
+  .rn-zone-val { text-align: right; color: var(--text-secondary); }
+
+  /* Load */
+  .rn-acwr { font-size: 38px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .rn-acwr-status { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; font-size: 13px; font-weight: 700; vertical-align: middle; letter-spacing: 0; }
+  .rn-acwr-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .rn-acwr-parts { margin-top: 4px; font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+  .rn-scale { position: relative; display: flex; height: 8px; margin: 18px 0 20px; border-radius: 999px; overflow: visible; }
+  .rn-scale-seg { height: 100%; }
+  .rn-scale-seg:first-child { border-radius: 999px 0 0 999px; }
+  .rn-scale-seg:last-child { border-radius: 0 999px 999px 0; }
+  .rn-scale-pin { position: absolute; top: -5px; width: 3px; height: 18px; margin-left: -1.5px; border-radius: 2px; background: var(--text-primary); box-shadow: 0 0 0 2px #0f0f10; }
+  .rn-scale-tick { position: absolute; top: 12px; transform: translateX(-50%); font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); }
+
   @media (max-width: 480px) {
     .rn-form { grid-template-columns: 1fr; }
     .rn-row { grid-template-columns: 50px repeat(4, minmax(0, 1fr)); font-size: 12px; }
+    .rn-grid-2 { grid-template-columns: 1fr; }
+    .rn-map { height: 240px; }
   }
 </style>
 <style>
@@ -2911,60 +3190,224 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
 </div><!-- /view-training -->
 
 <div class="view" id="view-laufen">
-  <div class="section">
-    <div class="section-title">Lauf eintragen</div>
-    <!-- Manual fallback; Strava-synced runs land in the same table later. -->
-    <form class="gm-card rn-form" id="rnForm" novalidate>
-      <div class="rn-field">
-        <label for="rnDate">Datum</label>
-        <input type="date" class="goal-input" id="rnDate" required>
-      </div>
-      <div class="rn-field">
-        <label for="rnType">Art</label>
-        <select class="goal-input" id="rnType">
-          <option value="easy">Locker</option>
-          <option value="long">Lang</option>
-          <option value="tempo">Tempo</option>
-          <option value="interval">Intervall</option>
-          <option value="race">Wettkampf</option>
-        </select>
-      </div>
-      <div class="rn-field">
-        <label for="rnDistance">Distanz (km)</label>
-        <input type="text" class="goal-input" id="rnDistance" inputmode="decimal" placeholder="10,0" autocomplete="off">
-      </div>
-      <div class="rn-field">
-        <label for="rnDuration">Zeit (h:mm:ss)</label>
-        <input type="text" class="goal-input" id="rnDuration" inputmode="numeric" placeholder="58:30" autocomplete="off">
-      </div>
-      <div class="rn-field">
-        <label for="rnHr">Ø-HF (optional)</label>
-        <input type="number" class="goal-input" id="rnHr" min="60" max="240" inputmode="numeric" placeholder="150">
-      </div>
-      <div class="rn-field">
-        <label for="rnElevation">Höhenmeter (optional)</label>
-        <input type="number" class="goal-input" id="rnElevation" min="0" max="10000" inputmode="numeric" placeholder="40">
-      </div>
-      <div class="rn-field rn-field-wide">
-        <label for="rnNotes">Notizen (optional)</label>
-        <input type="text" class="goal-input" id="rnNotes" maxlength="2000" autocomplete="off">
-      </div>
-      <div class="rn-pace-row">
-        <span class="rn-pace">Pace <strong id="rnPace">–:––</strong> /km</span>
-        <button type="submit" class="goal-btn-primary" id="rnSave">Speichern</button>
-      </div>
-      <div class="gm-status rn-field-wide" id="rnStatus"></div>
-    </form>
+  <div class="rn-subnav" role="tablist">
+    <button type="button" class="rn-subnav-btn is-active" data-rn-page="overview">Übersicht</button>
+    <button type="button" class="rn-subnav-btn" data-rn-page="analysis">Analysen</button>
   </div>
 
-  <div class="section">
-    <div class="section-title">Letzte Läufe</div>
+  <!-- ============================ ÜBERSICHT ============================ -->
+  <div id="rnOverview">
+    <div class="gm-card rn-strava" id="rnStrava">
+      <div class="rn-strava-text">
+        <div class="gm-eyebrow">Strava</div>
+        <div class="rn-strava-line" id="rnStravaLine">Prüfe Verbindung…</div>
+      </div>
+      <div class="rn-strava-actions">
+        <button type="button" class="goal-btn-primary" id="rnStravaMain" hidden>Mit Strava verbinden</button>
+        <button type="button" class="rn-link" id="rnStravaDisconnect" hidden>Trennen</button>
+      </div>
+    </div>
+
+    <div class="rn-grid-2">
+      <div class="gm-card rn-goal" id="rnGoal">
+        <div class="gm-eyebrow">Ziel · 10 km unter 60 min</div>
+        <div class="rn-goal-main" id="rnGoalMain">–</div>
+        <div class="rn-goal-sub" id="rnGoalSub"></div>
+        <div class="rn-goal-bar" aria-hidden="true"><div class="rn-goal-fill" id="rnGoalFill"></div><div class="rn-goal-mark"></div></div>
+        <div class="rn-goal-foot" id="rnGoalFoot"></div>
+      </div>
+
+      <div class="gm-card">
+        <div class="rn-card-head">
+          <div class="gm-eyebrow">Wochenkilometer</div>
+          <div class="rn-card-meta" id="rnWeeksMeta">letzte 12 Wochen</div>
+        </div>
+        <div class="rn-chart" id="rnWeeksChart"></div>
+      </div>
+    </div>
+
     <div class="gm-card">
-      <ul class="rn-list" id="rnList">
-        <li class="tr-muted">Lade Läufe…</li>
-      </ul>
+      <div class="rn-card-head">
+        <div class="gm-eyebrow">Pace-Verlauf</div>
+        <div class="rn-card-meta">letzte 20 Läufe · schneller = höher</div>
+      </div>
+      <div class="rn-chart" id="rnPaceChart"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Letzte Läufe</div>
+      <div class="gm-card">
+        <ul class="rn-list" id="rnList">
+          <li class="tr-muted">Lade Läufe…</li>
+        </ul>
+      </div>
+    </div>
+
+    <details class="rn-manual">
+      <summary>Lauf manuell eintragen</summary>
+      <!-- Fallback for runs Strava doesn't have. -->
+      <form class="gm-card rn-form" id="rnForm" novalidate>
+        <div class="rn-field">
+          <label for="rnDate">Datum</label>
+          <input type="date" class="goal-input" id="rnDate" required>
+        </div>
+        <div class="rn-field">
+          <label for="rnType">Art</label>
+          <select class="goal-input" id="rnType">
+            <option value="easy">Locker</option>
+            <option value="long">Lang</option>
+            <option value="tempo">Tempo</option>
+            <option value="interval">Intervall</option>
+            <option value="race">Wettkampf</option>
+          </select>
+        </div>
+        <div class="rn-field">
+          <label for="rnDistance">Distanz (km)</label>
+          <input type="text" class="goal-input" id="rnDistance" inputmode="decimal" placeholder="10,0" autocomplete="off">
+        </div>
+        <div class="rn-field">
+          <label for="rnDuration">Zeit (h:mm:ss)</label>
+          <input type="text" class="goal-input" id="rnDuration" inputmode="numeric" placeholder="58:30" autocomplete="off">
+        </div>
+        <div class="rn-field">
+          <label for="rnHr">Ø-HF (optional)</label>
+          <input type="number" class="goal-input" id="rnHr" min="60" max="240" inputmode="numeric" placeholder="150">
+        </div>
+        <div class="rn-field">
+          <label for="rnElevation">Höhenmeter (optional)</label>
+          <input type="number" class="goal-input" id="rnElevation" min="0" max="10000" inputmode="numeric" placeholder="40">
+        </div>
+        <div class="rn-field rn-field-wide">
+          <label for="rnNotes">Notizen (optional)</label>
+          <input type="text" class="goal-input" id="rnNotes" maxlength="2000" autocomplete="off">
+        </div>
+        <div class="rn-pace-row">
+          <span class="rn-pace">Pace <strong id="rnPace">–:––</strong> /km</span>
+          <button type="submit" class="goal-btn-primary" id="rnSave">Speichern</button>
+        </div>
+        <div class="gm-status rn-field-wide" id="rnStatus"></div>
+      </form>
+    </details>
+  </div>
+
+  <!-- ============================ LAUFDETAIL ============================ -->
+  <div id="rnDetail" hidden>
+    <button type="button" class="rn-back" id="rnBack">← Zurück</button>
+    <div class="rn-detail-head">
+      <div class="gm-eyebrow" id="rnDetailDate">–</div>
+      <h2 class="rn-detail-title" id="rnDetailTitle">–</h2>
+    </div>
+    <div class="rn-tiles" id="rnDetailTiles"></div>
+
+    <div class="gm-card rn-map-card" id="rnMapCard">
+      <div class="rn-map" id="rnMap"></div>
+      <div class="rn-empty" id="rnMapEmpty" hidden>Keine GPS-Strecke für diesen Lauf.</div>
+    </div>
+
+    <div class="gm-card">
+      <div class="rn-card-head">
+        <div class="gm-eyebrow">Verlauf über die Distanz</div>
+        <div class="rn-card-meta">HF · Pace · Höhe</div>
+      </div>
+      <div class="rn-chart" id="rnStreamChart"></div>
+    </div>
+
+    <div class="rn-grid-2">
+      <div class="gm-card">
+        <div class="rn-card-head">
+          <div class="gm-eyebrow">km-Splits</div>
+          <div class="rn-card-meta"><span class="rn-key rn-key-fast"></span>schneller <span class="rn-key rn-key-slow"></span>langsamer als Ø</div>
+        </div>
+        <div class="rn-table-wrap" id="rnSplits"></div>
+      </div>
+      <div class="gm-card">
+        <div class="rn-card-head">
+          <div class="gm-eyebrow">Zeit in HF-Zonen</div>
+          <div class="rn-card-meta" id="rnDetailZonesMeta"></div>
+        </div>
+        <div id="rnDetailZones"></div>
+      </div>
     </div>
   </div>
+
+  <!-- ============================ ANALYSEN ============================ -->
+  <div id="rnAnalysis" hidden>
+    <div class="section">
+      <div class="section-title">Herzfrequenz-Zonen</div>
+      <div class="rn-grid-2">
+        <form class="gm-card rn-hr-form" id="rnHrForm" novalidate>
+          <div class="gm-eyebrow">Einstellungen (Karvonen)</div>
+          <div class="rn-form">
+            <div class="rn-field">
+              <label for="rnMaxHr">Max-HF</label>
+              <input type="number" class="goal-input" id="rnMaxHr" min="100" max="240" inputmode="numeric">
+            </div>
+            <div class="rn-field">
+              <label for="rnRestHr">Ruhe-HF</label>
+              <input type="number" class="goal-input" id="rnRestHr" min="25" max="120" inputmode="numeric">
+            </div>
+            <div class="rn-field rn-field-wide">
+              <label for="rnTrimpSex">TRIMP-Formel (Banister)</label>
+              <select class="goal-input" id="rnTrimpSex">
+                <option value="1.92">Faktor 1,92 (männlich)</option>
+                <option value="1.67">Faktor 1,67 (weiblich)</option>
+              </select>
+            </div>
+          </div>
+          <div class="rn-pace-row">
+            <span class="rn-hint" id="rnHrHint"></span>
+            <button type="submit" class="goal-btn-primary">Speichern</button>
+          </div>
+          <div class="gm-status" id="rnHrStatus"></div>
+        </form>
+        <div class="gm-card">
+          <div class="gm-eyebrow">Zonen</div>
+          <div class="rn-table-wrap" id="rnZoneTable"></div>
+        </div>
+      </div>
+      <div class="gm-card">
+        <div class="rn-card-head">
+          <div class="gm-eyebrow">Zeit pro Zone pro Woche</div>
+          <div class="rn-card-meta" id="rnZoneWeeksMeta">letzte 8 Wochen</div>
+        </div>
+        <div class="rn-legend" id="rnZoneLegend"></div>
+        <div class="rn-chart" id="rnZoneWeeksChart"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Trainingsbelastung</div>
+      <div class="rn-grid-2">
+        <div class="gm-card">
+          <div class="gm-eyebrow">Akut : Chronisch</div>
+          <div class="rn-acwr" id="rnAcwr">–</div>
+          <div class="rn-acwr-parts" id="rnAcwrParts"></div>
+          <div class="rn-scale" id="rnAcwrScale"></div>
+        </div>
+        <div class="gm-card">
+          <div class="rn-card-head">
+            <div class="gm-eyebrow">TRIMP pro Lauf</div>
+            <div class="rn-card-meta">letzte 6 Wochen</div>
+          </div>
+          <div class="rn-chart" id="rnTrimpChart"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Wettkampfprognose</div>
+      <div class="rn-tiles" id="rnPrognosis"></div>
+      <div class="rn-hint rn-hint-block" id="rnPrognosisHint"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Bestleistungen</div>
+      <div class="rn-tiles" id="rnRecords"></div>
+      <div class="rn-hint rn-hint-block">1 km, 5 km und 10 km sind die schnellsten Abschnitte innerhalb eines Laufs, aus den Strava-Streams berechnet.</div>
+    </div>
+  </div>
+
+  <div class="rn-tooltip" id="rnTooltip" hidden></div>
 </div><!-- /view-laufen -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.js"></script>
@@ -5736,12 +6179,33 @@ const CONFIG = {
   'use strict';
 
   // ============================================================
-  // LAUFEN — runs live in public.runs (metres / seconds). Pace and km
-  // are only derived here. Manual entries are the fallback until the
-  // Strava sync writes source = 'strava' rows into the same table.
+  // LAUFEN — runs live in public.runs (metres / seconds); streams and
+  // km splits in run_streams / run_splits, filled by the `strava` edge
+  // function. Everything here only reads, except the manual-entry
+  // fallback form and the HR settings.
   // ============================================================
   const $ = (id) => document.getElementById(id);
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const LEAFLET = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/';
+  const DAY = 86400000;
+
   let sb = null;
+  const store = {
+    runs: [],            // oldest first
+    settings: null,
+    analysisStreams: null,
+    detail: null         // { run, stream, splits }
+  };
+  let page = 'overview';
+  let pageBeforeDetail = 'overview';
+
+  /* ---------------------------------------------------------------- */
+  /* Formatting                                                        */
+  /* ---------------------------------------------------------------- */
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
 
   function parseKm(text) {
     const v = parseFloat(String(text).trim().replace(',', '.'));
@@ -5751,7 +6215,7 @@ const CONFIG = {
   // Accepts "58:30", "1:02:15" or plain minutes like "45".
   function parseDuration(text) {
     const parts = String(text).trim().split(':');
-    if (!parts[0] || parts.length > 3 || parts.some(p => !/^\d+$/.test(p))) return null;
+    if (!parts[0] || parts.length > 3 || parts.some((p) => !/^\d+$/.test(p))) return null;
     const nums = parts.map(Number);
     let sec;
     if (nums.length === 1) sec = nums[0] * 60;
@@ -5776,14 +6240,1009 @@ const CONFIG = {
     return Math.floor(r / 60) + ':' + String(r % 60).padStart(2, '0');
   }
 
-  function fmtKm(m) { return (m / 1000).toFixed(2).replace('.', ','); }
+  function fmtKm(m, digits) { return (m / 1000).toFixed(digits == null ? 2 : digits).replace('.', ','); }
+  function fmtNum(v, digits) { return Number(v).toFixed(digits || 0).replace('.', ','); }
+  function fmtDate(d) { d = new Date(d); return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.'; }
+  function fmtDateLong(d) {
+    d = new Date(d);
+    return ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'][d.getDay()] + ', ' + fmtDate(d) + d.getFullYear();
+  }
+  function runPace(r) { return r.duration_s / (r.distance_m / 1000); }
+
+  const RUN_TYPE_LABEL = { easy: 'Lockerer Lauf', long: 'Langer Lauf', tempo: 'Tempolauf', interval: 'Intervalle', race: 'Wettkampf' };
+  const EST = '<span class="rn-est" title="Geschätzter Wert">Schätzung</span>';
 
   function todayInput() {
     const d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
 
-  function status(text, isError) {
+  function weekStart(d) {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
+    return x;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Heart-rate model                                                  */
+  /* ---------------------------------------------------------------- */
+
+  const ZONES = [
+    { name: 'Z1', lo: 0.5, hi: 0.6, label: 'Regeneration', color: 'var(--rn-z1)' },
+    { name: 'Z2', lo: 0.6, hi: 0.7, label: 'Grundlage', color: 'var(--rn-z2)' },
+    { name: 'Z3', lo: 0.7, hi: 0.8, label: 'Aerob', color: 'var(--rn-z3)' },
+    { name: 'Z4', lo: 0.8, hi: 0.9, label: 'Schwelle', color: 'var(--rn-z4)' },
+    { name: 'Z5', lo: 0.9, hi: 1.0, label: 'Maximal', color: 'var(--rn-z5)' }
+  ];
+  const TRIMP_KEY = 'rn_trimp_factor';
+
+  function trimpFactor() {
+    try { return Number(localStorage.getItem(TRIMP_KEY)) === 1.67 ? 1.67 : 1.92; } catch (e) { return 1.92; }
+  }
+
+  function hrParams() {
+    const s = store.settings || {};
+    let max = s.max_hr, maxEst = false, rest = s.resting_hr, restEst = false;
+    if (!max) {
+      maxEst = true;
+      if (s.birth_date) {
+        const b = new Date(s.birth_date), now = new Date();
+        let age = now.getFullYear() - b.getFullYear();
+        if (now < new Date(now.getFullYear(), b.getMonth(), b.getDate())) age--;
+        max = 220 - age;
+      } else {
+        max = 190;
+      }
+    }
+    if (!rest) { rest = 60; restEst = true; }
+    if (max <= rest + 20) max = rest + 20;
+    return { max, rest, maxEst, restEst, k: trimpFactor() };
+  }
+
+  // Karvonen: zone boundaries as a share of heart-rate reserve.
+  // Anything below 50 % still counts toward Z1.
+  function zoneIndex(hr, p) {
+    const r = (hr - p.rest) / (p.max - p.rest);
+    return r < 0.6 ? 0 : r < 0.7 ? 1 : r < 0.8 ? 2 : r < 0.9 ? 3 : 4;
+  }
+
+  // Samples with gaps over 30 s are pauses or dropouts and are skipped.
+  function eachHrSample(stream, fn) {
+    const t = stream.time, h = stream.heartrate;
+    for (let i = 1; i < Math.min(t.length, h.length); i++) {
+      const dt = t[i] - t[i - 1];
+      if (dt <= 0 || dt > 30 || h[i] == null) continue;
+      fn(h[i], dt);
+    }
+  }
+  function hasHrStream(stream) {
+    return !!(stream && stream.time && stream.heartrate && stream.heartrate.length > 1);
+  }
+
+  // With a HR stream the time per zone is measured; with only an average
+  // the whole run lands in one zone, which is a rough estimate.
+  function zoneSeconds(run, stream, p) {
+    const secs = [0, 0, 0, 0, 0];
+    if (hasHrStream(stream)) {
+      eachHrSample(stream, (hr, dt) => { secs[zoneIndex(hr, p)] += dt; });
+      return { secs, estimated: false };
+    }
+    if (run.avg_hr) {
+      secs[zoneIndex(run.avg_hr, p)] = run.duration_s;
+      return { secs, estimated: true };
+    }
+    return null;
+  }
+
+  // Banister TRIMP: minutes × HRr × 0.64 × e^(k × HRr).
+  function trimp(run, stream, p) {
+    const f = (hr, sec) => {
+      const r = Math.max(0, Math.min(1, (hr - p.rest) / (p.max - p.rest)));
+      return (sec / 60) * r * 0.64 * Math.exp(p.k * r);
+    };
+    if (hasHrStream(stream)) {
+      let sum = 0;
+      eachHrSample(stream, (hr, dt) => { sum += f(hr, dt); });
+      return { value: sum, estimated: false };
+    }
+    if (run.avg_hr) return { value: f(run.avg_hr, run.duration_s), estimated: true };
+    return null;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Derived figures                                                   */
+  /* ---------------------------------------------------------------- */
+
+  const RIEGEL_EXP = 1.06;
+  const TARGETS = [
+    { label: '5 km', m: 5000 },
+    { label: '10 km', m: 10000 },
+    { label: 'Halbmarathon', m: 21097.5 }
+  ];
+
+  // Every run of the last six weeks, plus its fastest 5 km / 10 km stretch
+  // from the streams, is a candidate; each target takes the fastest result.
+  function riegelPrognosis(targetM) {
+    const since = Date.now() - 42 * DAY;
+    let best = null;
+    store.runs.forEach((r) => {
+      if (new Date(r.performed_at).getTime() < since) return;
+      const cands = [];
+      if (r.distance_m >= 3000) cands.push({ t: r.duration_s, d: r.distance_m, what: 'Lauf über ' + fmtKm(r.distance_m, 1) + ' km' });
+      if (r.best_5k_s) cands.push({ t: r.best_5k_s, d: 5000, what: '5-km-Abschnitt' });
+      if (r.best_10k_s) cands.push({ t: r.best_10k_s, d: 10000, what: '10-km-Abschnitt' });
+      cands.forEach((c) => {
+        const t = c.t * Math.pow(targetM / c.d, RIEGEL_EXP);
+        if (!best || t < best.t) best = { t, source: c.what + ' am ' + fmtDate(r.performed_at) };
+      });
+    });
+    return best;
+  }
+
+  function bestStretch(field) {
+    let best = null;
+    store.runs.forEach((r) => {
+      if (r[field] && (!best || r[field] < best.t)) best = { t: r[field], run: r };
+    });
+    return best;
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Data                                                              */
+  /* ---------------------------------------------------------------- */
+
+  async function loadRuns() {
+    const { data, error } = await sb.from('runs')
+      .select('id, performed_at, distance_m, duration_s, avg_hr, elevation_gain_m, run_type, notes, source, strava_id, best_1k_s, best_5k_s, best_10k_s')
+      .order('performed_at', { ascending: true });
+    if (error) throw error;
+    store.runs = data || [];
+    store.analysisStreams = null;
+  }
+
+  async function loadSettings() {
+    const { data } = await sb.from('settings').select('resting_hr, max_hr, birth_date').maybeSingle();
+    store.settings = data || {};
+  }
+
+  // Only time + heart rate, and only for the window the analyses use.
+  async function loadAnalysisStreams() {
+    if (store.analysisStreams) return store.analysisStreams;
+    const since = Date.now() - 56 * DAY;
+    const ids = store.runs.filter((r) => new Date(r.performed_at).getTime() >= since).map((r) => r.id);
+    const map = {};
+    if (ids.length) {
+      const { data, error } = await sb.from('run_streams').select('run_id, time, heartrate').in('run_id', ids);
+      if (error) throw error;
+      (data || []).forEach((s) => { map[s.run_id] = s; });
+    }
+    store.analysisStreams = map;
+    return map;
+  }
+
+  async function reloadAll() {
+    try {
+      await Promise.all([loadRuns(), loadSettings()]);
+    } catch (e) {
+      $('rnList').innerHTML = '<li class="tr-muted">Läufe konnten nicht geladen werden: ' + esc(e.message) + '</li>';
+      return;
+    }
+    renderVisible();
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Charts — hand-drawn SVG, one series colour, hover tooltips        */
+  /* ---------------------------------------------------------------- */
+
+  function svg(tag, attrs, text) {
+    const el = document.createElementNS(SVG_NS, tag);
+    Object.keys(attrs || {}).forEach((k) => el.setAttribute(k, attrs[k]));
+    if (text != null) el.textContent = text;
+    return el;
+  }
+
+  function widthOf(el) { return Math.max(260, Math.round(el.clientWidth || 600)); }
+
+  function niceStep(range, ticks) {
+    const raw = range / Math.max(1, ticks);
+    const mag = Math.pow(10, Math.floor(Math.log10(raw || 1)));
+    const n = raw / mag;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag;
+  }
+
+  function showTip(html, evt) {
+    const tip = $('rnTooltip');
+    tip.innerHTML = html;
+    tip.hidden = false;
+    const pad = 14;
+    const r = tip.getBoundingClientRect();
+    let x = evt.clientX + pad, y = evt.clientY - r.height - pad;
+    if (x + r.width > window.innerWidth - 8) x = evt.clientX - r.width - pad;
+    if (y < 8) y = evt.clientY + pad;
+    tip.style.left = Math.max(8, x) + 'px';
+    tip.style.top = y + 'px';
+  }
+  function hideTip() { $('rnTooltip').hidden = true; }
+
+  function roundedTop(x, y, w, h, r) {
+    r = Math.max(0, Math.min(r, w / 2, h));
+    return 'M' + x + ',' + (y + h) + 'L' + x + ',' + (y + r) + 'Q' + x + ',' + y + ' ' + (x + r) + ',' + y
+      + 'L' + (x + w - r) + ',' + y + 'Q' + (x + w) + ',' + y + ' ' + (x + w) + ',' + (y + r)
+      + 'L' + (x + w) + ',' + (y + h) + 'Z';
+  }
+
+  // items: [{ label, values: [n, ...] | value: n, tip }]. Stacks when
+  // `colors` has one entry per value; segments sit 2 px apart and only the
+  // top one gets the rounded end.
+  function barChart(el, items, opt) {
+    el.innerHTML = '';
+    if (!items.length) { el.innerHTML = '<div class="rn-empty">' + (opt.empty || 'Keine Daten') + '</div>'; return; }
+    const W = widthOf(el), H = opt.height || 170;
+    const padL = 36, padR = 6, padT = 12, padB = 22;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+    const totals = items.map((it) => (it.values ? it.values.reduce((a, b) => a + b, 0) : it.value));
+    const step = niceStep(Math.max.apply(null, totals.concat([opt.minMax || 1])), 3);
+    const maxV = Math.ceil(Math.max.apply(null, totals.concat([opt.minMax || 1])) / step) * step;
+    const y = (v) => padT + innerH - (v / maxV) * innerH;
+    const root = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, height: H, role: 'img', 'aria-label': opt.aria || '' });
+
+    for (let v = 0; v <= maxV + 1e-9; v += step) {
+      root.appendChild(svg('line', { class: 'rn-gridline', x1: padL, x2: W - padR, y1: y(v), y2: y(v) }));
+      root.appendChild(svg('text', { class: 'rn-axis', x: padL - 6, y: y(v) + 3, 'text-anchor': 'end' }, opt.fmtY ? opt.fmtY(v) : v));
+    }
+
+    const slot = innerW / items.length;
+    const barW = Math.max(3, Math.min(42, slot - Math.max(2, slot * 0.28)));
+    const labelEvery = Math.max(1, Math.ceil(items.length / Math.max(1, Math.floor(innerW / 46))));
+
+    items.forEach((it, i) => {
+      const x = padL + slot * i + (slot - barW) / 2;
+      const g = svg('g', {});
+      const values = it.values || [it.value];
+      const colors = opt.colors || ['var(--rn-series)'];
+      let base = 0;
+      const lastIdx = values.reduce((last, v, j) => (v > 0 ? j : last), -1);
+      values.forEach((v, j) => {
+        if (!(v > 0)) return;
+        const top = y(base + v), bottom = y(base);
+        const gap = j > 0 && base > 0 ? 2 : 0;
+        const h = Math.max(1, bottom - top - gap);
+        const shape = j === lastIdx
+          ? svg('path', { d: roundedTop(x, top, barW, h, 4) })
+          : svg('rect', { x, y: top, width: barW, height: h });
+        shape.style.fill = colors[j % colors.length];
+        g.appendChild(shape);
+        base += v;
+      });
+      root.appendChild(g);
+      if (i % labelEvery === 0) {
+        root.appendChild(svg('text', { class: 'rn-axis', x: padL + slot * i + slot / 2, y: H - 6, 'text-anchor': 'middle' }, it.label));
+      }
+      const hit = svg('rect', { class: 'rn-hit', x: padL + slot * i, y: padT, width: slot, height: innerH });
+      hit.addEventListener('mousemove', (e) => { g.classList.add('rn-bar-hover'); showTip(it.tip, e); });
+      hit.addEventListener('mouseleave', () => { g.classList.remove('rn-bar-hover'); hideTip(); });
+      root.appendChild(hit);
+    });
+    el.appendChild(root);
+  }
+
+  // Evenly spaced points with a crosshair; `invert` puts small values on top
+  // (pace: faster is higher).
+  function lineChart(el, pts, opt) {
+    el.innerHTML = '';
+    if (pts.length < 2) { el.innerHTML = '<div class="rn-empty">' + (opt.empty || 'Zu wenig Daten') + '</div>'; return; }
+    const W = widthOf(el), H = opt.height || 170;
+    const padL = 40, padR = 12, padT = 14, padB = 22;
+    const innerW = W - padL - padR, innerH = H - padT - padB;
+    const vals = pts.map((p) => p.v);
+    let lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+    const step = niceStep(hi - lo || hi * 0.1 || 1, 3);
+    lo = Math.floor(lo / step) * step;
+    hi = Math.ceil(hi / step) * step;
+    if (hi === lo) hi = lo + step;
+    const x = (i) => padL + (innerW * i) / (pts.length - 1);
+    const y = (v) => {
+      const f = (v - lo) / (hi - lo);
+      return padT + (opt.invert ? f : 1 - f) * innerH;
+    };
+    const root = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, height: H, role: 'img', 'aria-label': opt.aria || '' });
+    for (let v = lo; v <= hi + 1e-9; v += step) {
+      root.appendChild(svg('line', { class: 'rn-gridline', x1: padL, x2: W - padR, y1: y(v), y2: y(v) }));
+      root.appendChild(svg('text', { class: 'rn-axis', x: padL - 6, y: y(v) + 3, 'text-anchor': 'end' }, opt.fmtY(v)));
+    }
+    const labelEvery = Math.max(1, Math.ceil(pts.length / Math.max(1, Math.floor(innerW / 50))));
+    pts.forEach((p, i) => {
+      if (i % labelEvery === 0) {
+        root.appendChild(svg('text', { class: 'rn-axis', x: x(i), y: H - 6, 'text-anchor': 'middle' }, p.label));
+      }
+    });
+    root.appendChild(svg('path', { class: 'rn-line', d: pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ',' + y(p.v).toFixed(1)).join('') }));
+    const last = pts[pts.length - 1];
+    root.appendChild(svg('circle', { class: 'rn-dot', cx: x(pts.length - 1), cy: y(last.v), r: 4 }));
+
+    const cross = svg('line', { class: 'rn-crosshair', y1: padT, y2: padT + innerH, visibility: 'hidden' });
+    const marker = svg('circle', { class: 'rn-dot', r: 4, visibility: 'hidden' });
+    root.appendChild(cross);
+    root.appendChild(marker);
+    const overlay = svg('rect', { class: 'rn-hit', x: padL, y: padT, width: innerW, height: innerH });
+    overlay.addEventListener('mousemove', (e) => {
+      const box = root.getBoundingClientRect();
+      const px = ((e.clientX - box.left) / box.width) * W;
+      const i = Math.max(0, Math.min(pts.length - 1, Math.round(((px - padL) / innerW) * (pts.length - 1))));
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+      marker.setAttribute('cx', x(i)); marker.setAttribute('cy', y(pts[i].v)); marker.setAttribute('visibility', 'visible');
+      showTip(pts[i].tip, e);
+    });
+    overlay.addEventListener('mouseleave', () => {
+      cross.setAttribute('visibility', 'hidden'); marker.setAttribute('visibility', 'hidden'); hideTip();
+    });
+    root.appendChild(overlay);
+    el.appendChild(root);
+  }
+
+  // Heart rate, pace and elevation stacked over one shared distance axis,
+  // with one crosshair across all three panels.
+  function streamChart(el, xsKm, series) {
+    el.innerHTML = '';
+    const usable = series.filter((s) => s.values.some((v) => v != null));
+    if (xsKm.length < 2 || !usable.length) { el.innerHTML = '<div class="rn-empty">Keine Stream-Daten für diesen Lauf.</div>'; return; }
+    const W = widthOf(el);
+    const panelH = 92, gapH = 38, padL = 44, padR = 10, padT = 18, padB = 22;
+    const innerW = W - padL - padR;
+    const H = padT + usable.length * panelH + (usable.length - 1) * gapH + padB;
+    const maxX = xsKm[xsKm.length - 1] || 1;
+    const x = (km) => padL + (km / maxX) * innerW;
+    const root = svg('svg', { viewBox: '0 0 ' + W + ' ' + H, height: H, role: 'img', 'aria-label': 'Herzfrequenz, Pace und Höhe über die Distanz' });
+
+    const panels = usable.map((s, pi) => {
+      const top = padT + pi * (panelH + gapH);
+      const present = s.values.filter((v) => v != null).slice().sort((a, b) => a - b);
+      // Clip the outer 2 % so a GPS spike doesn't flatten the whole panel.
+      let lo = present[Math.floor(present.length * 0.02)];
+      let hi = present[Math.ceil(present.length * 0.98) - 1];
+      if (hi - lo < s.minRange) { const mid = (hi + lo) / 2; lo = mid - s.minRange / 2; hi = mid + s.minRange / 2; }
+      const y = (v) => {
+        const f = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+        return top + (s.invert ? f : 1 - f) * panelH;
+      };
+      root.appendChild(svg('text', { class: 'rn-series-label', x: padL, y: top - 5 }, s.name));
+      [lo, hi].forEach((v) => {
+        root.appendChild(svg('line', { class: 'rn-gridline', x1: padL, x2: W - padR, y1: y(v), y2: y(v) }));
+        root.appendChild(svg('text', { class: 'rn-axis', x: padL - 6, y: y(v) + 3, 'text-anchor': 'end' }, s.fmt(v)));
+      });
+      let d = '', pen = false;
+      s.values.forEach((v, i) => {
+        if (v == null) { pen = false; return; }
+        d += (pen ? 'L' : 'M') + x(xsKm[i]).toFixed(1) + ',' + y(v).toFixed(1);
+        pen = true;
+      });
+      root.appendChild(svg('path', { class: 'rn-line', d }));
+      const marker = svg('circle', { class: 'rn-dot', r: 4, visibility: 'hidden' });
+      root.appendChild(marker);
+      return { s, y, marker };
+    });
+
+    const kmStep = niceStep(maxX, Math.max(2, Math.floor(innerW / 60)));
+    for (let km = 0; km <= maxX + 1e-9; km += kmStep) {
+      root.appendChild(svg('text', { class: 'rn-axis', x: x(km), y: H - 6, 'text-anchor': 'middle' }, fmtNum(km, kmStep < 1 ? 1 : 0)));
+    }
+
+    const cross = svg('line', { class: 'rn-crosshair', y1: padT, y2: H - padB, visibility: 'hidden' });
+    root.appendChild(cross);
+    const overlay = svg('rect', { class: 'rn-hit', x: padL, y: padT, width: innerW, height: H - padT - padB });
+    overlay.addEventListener('mousemove', (e) => {
+      const box = root.getBoundingClientRect();
+      const km = Math.max(0, Math.min(maxX, (((e.clientX - box.left) / box.width) * W - padL) / innerW * maxX));
+      let i = 0, lo = 0, hi = xsKm.length - 1;
+      while (lo <= hi) { const mid = (lo + hi) >> 1; if (xsKm[mid] < km) lo = mid + 1; else hi = mid - 1; }
+      i = Math.min(xsKm.length - 1, lo);
+      cross.setAttribute('x1', x(xsKm[i])); cross.setAttribute('x2', x(xsKm[i])); cross.setAttribute('visibility', 'visible');
+      let html = '<div class="rn-tt-muted">km ' + fmtNum(xsKm[i], 2) + '</div>';
+      panels.forEach((p) => {
+        const v = p.s.values[i];
+        if (v == null) { p.marker.setAttribute('visibility', 'hidden'); return; }
+        p.marker.setAttribute('cx', x(xsKm[i])); p.marker.setAttribute('cy', p.y(v)); p.marker.setAttribute('visibility', 'visible');
+        html += '<div>' + esc(p.s.name) + ': ' + esc(p.s.fmt(v)) + ' ' + esc(p.s.unit) + '</div>';
+      });
+      showTip(html, e);
+    });
+    overlay.addEventListener('mouseleave', () => {
+      cross.setAttribute('visibility', 'hidden');
+      panels.forEach((p) => p.marker.setAttribute('visibility', 'hidden'));
+      hideTip();
+    });
+    root.appendChild(overlay);
+    el.appendChild(root);
+  }
+
+  function zoneRows(el, secs) {
+    const total = secs.reduce((a, b) => a + b, 0) || 1;
+    el.innerHTML = '<div class="rn-zone-rows">' + ZONES.map((z, i) => {
+      const pct = (secs[i] / total) * 100;
+      return '<div class="rn-zone-row">'
+        + '<span class="rn-zone-name">' + z.name + '</span>'
+        + '<div class="rn-zone-track"><div class="rn-zone-fill" style="width:' + pct.toFixed(1) + '%;background:' + z.color + '"></div></div>'
+        + '<span class="rn-zone-val">' + fmtDuration(secs[i]) + ' · ' + Math.round(pct) + ' %</span>'
+        + '</div>';
+    }).join('') + '</div>';
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Übersicht                                                         */
+  /* ---------------------------------------------------------------- */
+
+  function renderOverview() {
+    renderList();
+    renderWeeks();
+    renderPaceTrend();
+    renderGoal();
+  }
+
+  function renderList() {
+    const list = $('rnList');
+    const runs = store.runs.slice(-20).reverse();
+    if (!runs.length) {
+      list.innerHTML = '<li class="tr-muted">Noch keine Läufe.</li>';
+      return;
+    }
+    list.innerHTML = '<li class="rn-row rn-row-head"><span>Datum</span><span>km</span><span>Zeit</span><span>Pace</span><span>Ø-HF</span></li>'
+      + runs.map((r) =>
+        '<li class="rn-row rn-row-link" tabindex="0" data-run="' + r.id + '">'
+        + '<span class="rn-date">' + fmtDate(r.performed_at) + '</span>'
+        + '<span class="rn-dist">' + fmtKm(r.distance_m) + (r.source === 'strava' ? '<span class="rn-src">STRAVA</span>' : '') + '</span>'
+        + '<span>' + fmtDuration(r.duration_s) + '</span>'
+        + '<span>' + fmtPace(runPace(r)) + '</span>'
+        + '<span class="' + (r.avg_hr ? '' : 'rn-muted') + '">' + (r.avg_hr || '–') + '</span>'
+        + '</li>').join('');
+  }
+
+  function renderWeeks() {
+    const start = weekStart(new Date());
+    const weeks = [];
+    for (let i = 11; i >= 0; i--) {
+      const w = new Date(start);
+      w.setDate(w.getDate() - i * 7);
+      weeks.push({ start: w, m: 0, n: 0 });
+    }
+    store.runs.forEach((r) => {
+      const ws = weekStart(r.performed_at).getTime();
+      const w = weeks.find((x) => x.start.getTime() === ws);
+      if (w) { w.m += r.distance_m; w.n++; }
+    });
+    const total = weeks.reduce((a, w) => a + w.m, 0);
+    $('rnWeeksMeta').textContent = 'letzte 12 Wochen · Ø ' + fmtKm(total / 12, 1) + ' km';
+    barChart($('rnWeeksChart'), weeks.map((w) => ({
+      label: fmtDate(w.start),
+      value: w.m / 1000,
+      tip: '<div class="rn-tt-muted">Woche ab ' + fmtDate(w.start) + '</div><div><strong>' + fmtKm(w.m, 1) + ' km</strong> · ' + w.n + (w.n === 1 ? ' Lauf' : ' Läufe') + '</div>'
+    })), { fmtY: (v) => fmtNum(v), minMax: 10, aria: 'Wochenkilometer der letzten 12 Wochen', height: 170 });
+  }
+
+  function renderPaceTrend() {
+    const runs = store.runs.slice(-20);
+    lineChart($('rnPaceChart'), runs.map((r) => ({
+      v: runPace(r),
+      label: fmtDate(r.performed_at),
+      tip: '<div class="rn-tt-muted">' + fmtDate(r.performed_at) + ' · ' + fmtKm(r.distance_m) + ' km</div><div><strong>' + fmtPace(runPace(r)) + ' /km</strong></div>'
+    })), { invert: true, fmtY: fmtPace, height: 180, aria: 'Pace der letzten 20 Läufe', empty: 'Ab 2 Läufen gibt es einen Verlauf' });
+  }
+
+  function renderGoal() {
+    const GOAL = 3600;
+    // Measured: the fastest 10 km stretch from the streams, or a whole run
+    // of 10.0–10.3 km scaled to exactly 10 km.
+    let best = null;
+    store.runs.forEach((r) => {
+      if (r.best_10k_s && (!best || r.best_10k_s < best.t)) best = { t: r.best_10k_s, run: r, scaled: false };
+      if (!r.best_10k_s && r.distance_m >= 10000 && r.distance_m <= 10300) {
+        const t = r.duration_s * 10000 / r.distance_m;
+        if (!best || t < best.t) best = { t, run: r, scaled: r.distance_m > 10050 };
+      }
+    });
+    const prog = riegelPrognosis(10000);
+    const fill = $('rnGoalFill');
+
+    if (best) {
+      $('rnGoalMain').innerHTML = fmtDuration(best.t) + (best.scaled ? EST : '');
+      const diff = best.t - GOAL;
+      if (diff < 0) {
+        $('rnGoalSub').innerHTML = '✓ Ziel erreicht · <strong>' + fmtDuration(-diff) + '</strong> unter 60 min (' + fmtDate(best.run.performed_at) + ')';
+      } else {
+        $('rnGoalSub').innerHTML = 'Noch <strong>' + fmtDuration(diff) + '</strong> bis zum Ziel · nötig 6:00 /km, Bestwert ' + fmtPace(best.t / 10) + ' /km';
+      }
+      fill.style.width = Math.min(100, (GOAL / best.t) * 100) + '%';
+      fill.classList.toggle('is-done', diff < 0);
+    } else {
+      $('rnGoalMain').textContent = '–';
+      $('rnGoalSub').textContent = 'Noch kein gemessener 10-km-Lauf.';
+      fill.style.width = prog ? Math.min(100, (GOAL / prog.t) * 100) + '%' : '0';
+      fill.classList.toggle('is-done', !!prog && prog.t < GOAL);
+    }
+    $('rnGoalFoot').innerHTML = prog
+      ? 'Aktuelle Prognose: <strong>' + fmtDuration(prog.t) + '</strong>' + EST + '<br>Riegel aus ' + esc(prog.source)
+      : 'Für eine Prognose fehlen Läufe aus den letzten 6 Wochen.';
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Laufdetail                                                        */
+  /* ---------------------------------------------------------------- */
+
+  let map = null;
+  let leafletPromise = null;
+
+  function ensureLeaflet() {
+    if (window.L) return Promise.resolve(window.L);
+    if (leafletPromise) return leafletPromise;
+    leafletPromise = new Promise((resolve, reject) => {
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = LEAFLET + 'leaflet.min.css';
+      document.head.appendChild(css);
+      const js = document.createElement('script');
+      js.src = LEAFLET + 'leaflet.min.js';
+      js.onload = () => resolve(window.L);
+      js.onerror = () => { leafletPromise = null; reject(new Error('Leaflet konnte nicht geladen werden')); };
+      document.head.appendChild(js);
+    });
+    return leafletPromise;
+  }
+
+  async function openRun(id) {
+    const run = store.runs.find((r) => r.id === id);
+    if (!run) return;
+    if (page !== 'detail') pageBeforeDetail = page;
+    store.detail = { run, stream: null, splits: [], loading: true };
+    showPage('detail');
+    window.scrollTo({ top: 0 });
+    renderDetail();
+    const [streamRes, splitsRes] = await Promise.all([
+      sb.from('run_streams').select('*').eq('run_id', id).maybeSingle(),
+      sb.from('run_splits').select('*').eq('run_id', id).order('km')
+    ]);
+    if (!store.detail || store.detail.run.id !== id) return;
+    store.detail.stream = streamRes.data || null;
+    store.detail.splits = splitsRes.data || [];
+    store.detail.loading = false;
+    renderDetail();
+  }
+
+  function tile(label, value, sub) {
+    return '<div class="rn-tile"><div class="rn-tile-label">' + label + '</div><div class="rn-tile-value">' + value + '</div>'
+      + (sub ? '<div class="rn-tile-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  function renderDetail() {
+    const d = store.detail;
+    if (!d) return;
+    const r = d.run;
+    const p = hrParams();
+    $('rnDetailDate').textContent = fmtDateLong(r.performed_at) + (r.source === 'strava' ? ' · Strava' : ' · manuell');
+    $('rnDetailTitle').textContent = r.notes || RUN_TYPE_LABEL[r.run_type] || 'Lauf';
+
+    const load = trimp(r, d.stream, p);
+    $('rnDetailTiles').innerHTML =
+      tile('Distanz', fmtKm(r.distance_m) + ' km')
+      + tile('Zeit', fmtDuration(r.duration_s))
+      + tile('Pace', fmtPace(runPace(r)) + ' /km')
+      + tile('Ø-HF', r.avg_hr ? r.avg_hr + ' bpm' : '–')
+      + tile('Höhenmeter', r.elevation_gain_m != null ? r.elevation_gain_m + ' m' : '–')
+      + tile('TRIMP', load ? Math.round(load.value) + (load.estimated || p.maxEst || p.restEst ? EST : '') : '–', load && load.estimated ? 'aus Ø-HF' : '');
+
+    if (d.loading) {
+      $('rnSplits').innerHTML = '<div class="rn-empty">Lade…</div>';
+      $('rnStreamChart').innerHTML = '<div class="rn-empty">Lade…</div>';
+      $('rnDetailZones').innerHTML = '';
+      $('rnMapEmpty').hidden = true;
+      return;
+    }
+    renderMap(d);
+    renderSplits(d);
+    renderStreamChart(d);
+
+    const zs = zoneSeconds(r, d.stream, p);
+    if (zs) {
+      zoneRows($('rnDetailZones'), zs.secs);
+      $('rnDetailZonesMeta').innerHTML = 'Max ' + p.max + ' · Ruhe ' + p.rest
+        + (zs.estimated ? ' · aus Ø-HF' + EST : (p.maxEst || p.restEst ? EST : ''));
+    } else {
+      $('rnDetailZones').innerHTML = '<div class="rn-empty">Keine Herzfrequenz für diesen Lauf.</div>';
+      $('rnDetailZonesMeta').textContent = '';
+    }
+  }
+
+  async function renderMap(d) {
+    const latlng = d.stream && Array.isArray(d.stream.latlng) ? d.stream.latlng.filter((p) => Array.isArray(p) && p.length === 2) : [];
+    const el = $('rnMap');
+    if (map) { map.remove(); map = null; }
+    if (latlng.length < 2) {
+      el.hidden = true;
+      $('rnMapEmpty').hidden = false;
+      return;
+    }
+    el.hidden = false;
+    $('rnMapEmpty').hidden = true;
+    let L;
+    try { L = await ensureLeaflet(); } catch (e) {
+      el.hidden = true;
+      $('rnMapEmpty').hidden = false;
+      $('rnMapEmpty').textContent = e.message;
+      return;
+    }
+    if (store.detail !== d || page !== 'detail') return;
+    map = L.map(el, { scrollWheelZoom: false });
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      className: 'rn-tiles-dark',
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+    }).addTo(map);
+    const line = L.polyline(latlng, { color: '#6da7ec', weight: 3, opacity: 0.95 }).addTo(map);
+    L.circleMarker(latlng[0], { radius: 6, color: '#0f0f10', weight: 2, fillColor: '#ffffff', fillOpacity: 1 }).bindTooltip('Start').addTo(map);
+    L.circleMarker(latlng[latlng.length - 1], { radius: 6, color: '#0f0f10', weight: 2, fillColor: '#3987e5', fillOpacity: 1 }).bindTooltip('Ziel').addTo(map);
+    map.fitBounds(line.getBounds(), { padding: [20, 20] });
+    setTimeout(() => { if (map) map.invalidateSize(); }, 60);
+  }
+
+  function renderSplits(d) {
+    const splits = d.splits;
+    if (!splits.length) {
+      $('rnSplits').innerHTML = '<div class="rn-empty">Splits gibt es für Läufe mit Strava-Streams.</div>';
+      return;
+    }
+    const paces = splits.map((s) => s.duration_sec / (s.distance_m / 1000));
+    const totalD = splits.reduce((a, s) => a + s.distance_m, 0);
+    const totalT = splits.reduce((a, s) => a + s.duration_sec, 0);
+    const avg = totalT / (totalD / 1000);
+    const rows = splits.map((s, i) => {
+      const rel = (paces[i] - avg) / avg;
+      const w = Math.min(1, Math.abs(rel) / 0.12) * 50;
+      const bar = rel < 0
+        ? '<span style="right:50%;width:' + w.toFixed(1) + '%;background:var(--rn-faster)"></span>'
+        : '<span style="left:50%;width:' + w.toFixed(1) + '%;background:var(--rn-slower)"></span>';
+      const partial = s.distance_m < 999;
+      return '<tr>'
+        + '<td>' + (partial ? fmtKm(s.distance_m) : s.km) + '</td>'
+        + '<td><div class="rn-pace-cell"><span>' + fmtPace(paces[i]) + '</span>'
+        + '<span class="rn-pace-bar" title="' + (rel < 0 ? 'schneller' : 'langsamer') + ' als Ø ' + fmtPace(avg) + '">'
+        + '<span style="left:50%;width:1px;background:var(--rn-neutral)"></span>' + bar + '</span></div></td>'
+        + '<td class="rn-num">' + (s.avg_hr != null ? Math.round(s.avg_hr) : '–') + '</td>'
+        + '<td class="rn-num">' + (s.elevation_diff != null ? (s.elevation_diff > 0 ? '+' : '') + Math.round(s.elevation_diff) + ' m' : '–') + '</td>'
+        + '</tr>';
+    }).join('');
+    $('rnSplits').innerHTML = '<table class="rn-table"><thead><tr><th>km</th><th>Pace /km</th><th class="rn-num">Ø-HF</th><th class="rn-num">Höhe</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  function renderStreamChart(d) {
+    const s = d.stream;
+    if (!s || !s.distance || s.distance.length < 2) {
+      $('rnStreamChart').innerHTML = '<div class="rn-empty">Keine Stream-Daten für diesen Lauf.</div>';
+      return;
+    }
+    const n = s.distance.length;
+    const target = Math.min(n, Math.max(120, Math.floor(widthOf($('rnStreamChart')) / 2)));
+    const stepN = n / target;
+    const idx = [];
+    for (let k = 0; k < target; k++) idx.push(Math.min(n - 1, Math.floor(k * stepN)));
+    if (idx[idx.length - 1] !== n - 1) idx.push(n - 1);
+
+    // Average each bucket so GPS jitter in velocity doesn't read as pace spikes.
+    const bucketAvg = (arr, i, j) => {
+      let sum = 0, cnt = 0;
+      for (let q = i; q <= j; q++) if (arr[q] != null) { sum += arr[q]; cnt++; }
+      return cnt ? sum / cnt : null;
+    };
+    const xs = [], hr = [], pace = [], alt = [];
+    idx.forEach((i, k) => {
+      const j = k + 1 < idx.length ? Math.max(i, idx[k + 1] - 1) : i;
+      xs.push(s.distance[i] / 1000);
+      hr.push(s.heartrate ? bucketAvg(s.heartrate, i, j) : null);
+      const v = s.velocity ? bucketAvg(s.velocity, i, j) : null;
+      pace.push(v != null && v > 0.9 ? 1000 / v : null);
+      alt.push(s.altitude ? bucketAvg(s.altitude, i, j) : null);
+    });
+    streamChart($('rnStreamChart'), xs, [
+      { name: 'Herzfrequenz', values: hr, fmt: (v) => String(Math.round(v)), unit: 'bpm', minRange: 20 },
+      { name: 'Pace', values: pace, fmt: fmtPace, unit: '/km', invert: true, minRange: 30 },
+      { name: 'Höhe', values: alt, fmt: (v) => String(Math.round(v)), unit: 'm', minRange: 10 }
+    ]);
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Analysen                                                          */
+  /* ---------------------------------------------------------------- */
+
+  async function renderAnalysis() {
+    renderHrSettings();
+    renderPrognosis();
+    renderRecords();
+    let streams;
+    try {
+      streams = await loadAnalysisStreams();
+    } catch (e) {
+      $('rnZoneWeeksChart').innerHTML = '<div class="rn-empty">Streams konnten nicht geladen werden: ' + esc(e.message) + '</div>';
+      return;
+    }
+    if (page !== 'analysis') return;
+    renderZoneWeeks(streams);
+    renderLoad(streams);
+  }
+
+  function renderHrSettings() {
+    const s = store.settings || {};
+    const p = hrParams();
+    if (document.activeElement !== $('rnMaxHr')) $('rnMaxHr').value = s.max_hr || '';
+    if (document.activeElement !== $('rnRestHr')) $('rnRestHr').value = s.resting_hr || '';
+    $('rnMaxHr').placeholder = String(p.max);
+    $('rnRestHr').placeholder = String(p.rest);
+    $('rnTrimpSex').value = String(p.k);
+    const hints = [];
+    if (p.maxEst) hints.push(s.birth_date ? 'Max-HF geschätzt: 220 − Alter = ' + p.max : 'Max-HF geschätzt: ' + p.max);
+    if (p.restEst) hints.push('Ruhe-HF geschätzt: ' + p.rest);
+    $('rnHrHint').innerHTML = hints.length ? esc(hints.join(' · ')) + EST : 'Zonen nach Karvonen (% der HF-Reserve)';
+
+    $('rnZoneTable').innerHTML = '<table class="rn-table"><thead><tr><th>Zone</th><th>Bereich</th><th class="rn-num">bpm</th></tr></thead><tbody>'
+      + ZONES.map((z, i) => {
+        const from = Math.round(p.rest + (i === 0 ? 0 : z.lo) * (p.max - p.rest));
+        const to = Math.round(p.rest + z.hi * (p.max - p.rest));
+        return '<tr><td><span class="rn-swatch" style="background:' + z.color + '"></span> ' + z.name + '</td><td>' + z.label
+          + ' <span class="rn-muted">' + Math.round(z.lo * 100) + '–' + Math.round(z.hi * 100) + ' %</span></td>'
+          + '<td class="rn-num">' + (i === 0 ? '≤ ' + to : (from + 1) + '–' + to) + '</td></tr>';
+      }).join('') + '</tbody></table>';
+
+    $('rnZoneLegend').innerHTML = ZONES.map((z) => '<span><span class="rn-swatch" style="background:' + z.color + '"></span>' + z.name + ' ' + z.label + '</span>').join('');
+  }
+
+  function renderZoneWeeks(streams) {
+    const p = hrParams();
+    const start = weekStart(new Date());
+    const weeks = [];
+    for (let i = 7; i >= 0; i--) {
+      const w = new Date(start);
+      w.setDate(w.getDate() - i * 7);
+      weeks.push({ start: w, secs: [0, 0, 0, 0, 0], est: 0, noHr: 0 });
+    }
+    store.runs.forEach((r) => {
+      const w = weeks.find((x) => x.start.getTime() === weekStart(r.performed_at).getTime());
+      if (!w) return;
+      const zs = zoneSeconds(r, streams[r.id], p);
+      if (!zs) { w.noHr++; return; }
+      zs.secs.forEach((v, i) => { w.secs[i] += v; });
+      if (zs.estimated) w.est++;
+    });
+    const estRuns = weeks.reduce((a, w) => a + w.est, 0);
+    const noHr = weeks.reduce((a, w) => a + w.noHr, 0);
+    $('rnZoneWeeksMeta').innerHTML = 'letzte 8 Wochen, Minuten'
+      + (estRuns ? ' · ' + estRuns + ' Läufe nur mit Ø-HF' + EST : '')
+      + (noHr ? ' · ' + noHr + ' ohne HF' : '');
+    barChart($('rnZoneWeeksChart'), weeks.map((w) => ({
+      label: fmtDate(w.start),
+      values: w.secs.map((s) => s / 60),
+      tip: '<div class="rn-tt-muted">Woche ab ' + fmtDate(w.start) + (w.est ? ' · enthält Schätzungen' : '') + '</div>'
+        + ZONES.map((z, i) => '<div><span class="rn-swatch" style="background:' + z.color + '"></span> ' + z.name + ': ' + Math.round(w.secs[i] / 60) + ' min</div>').join('')
+    })), { colors: ZONES.map((z) => z.color), fmtY: (v) => fmtNum(v), minMax: 30, height: 190, aria: 'Minuten pro HF-Zone pro Woche' });
+  }
+
+  function renderLoad(streams) {
+    const p = hrParams();
+    const now = Date.now();
+    let acute = 0, chronic = 0, estimated = p.maxEst || p.restEst, missing = 0;
+    const bars = [];
+    store.runs.forEach((r) => {
+      const age = now - new Date(r.performed_at).getTime();
+      if (age > 42 * DAY) return;
+      const t = trimp(r, streams[r.id], p);
+      if (!t) { if (age <= 28 * DAY) missing++; return; }
+      if (age <= 7 * DAY) acute += t.value;
+      if (age <= 28 * DAY) { chronic += t.value; if (t.estimated) estimated = true; }
+      bars.push({
+        label: fmtDate(r.performed_at),
+        value: t.value,
+        tip: '<div class="rn-tt-muted">' + fmtDate(r.performed_at) + ' · ' + fmtKm(r.distance_m) + ' km</div><div><strong>TRIMP ' + Math.round(t.value) + '</strong>' + (t.estimated ? ' (Schätzung aus Ø-HF)' : '') + '</div>'
+      });
+    });
+    const chronicWeekly = chronic / 4;
+    const ratio = chronicWeekly > 0 ? acute / chronicWeekly : null;
+
+    let label = 'Keine Daten', color = 'var(--rn-neutral)';
+    if (ratio != null) {
+      if (ratio < 0.8) { label = 'Zu wenig'; color = 'var(--rn-warning)'; }
+      else if (ratio <= 1.3) { label = 'Optimal'; color = 'var(--rn-good)'; }
+      else if (ratio <= 1.5) { label = 'Erhöht'; color = 'var(--rn-warning)'; }
+      else { label = 'Risiko'; color = 'var(--rn-critical)'; }
+    }
+    $('rnAcwr').innerHTML = (ratio != null ? fmtNum(ratio, 2) : '–')
+      + '<span class="rn-acwr-status"><span class="rn-acwr-dot" style="background:' + color + '"></span>' + label + '</span>'
+      + (ratio != null && estimated ? EST : '');
+    $('rnAcwrParts').innerHTML = 'Akut (7 Tage): <strong>' + Math.round(acute) + '</strong> · Chronisch (Ø pro Woche, 28 Tage): <strong>' + Math.round(chronicWeekly) + '</strong>'
+      + (missing ? '<br>' + missing + (missing === 1 ? ' Lauf' : ' Läufe') + ' ohne Herzfrequenz nicht berücksichtigt' : '');
+
+    // 0–2 scale: <0.8 low, 0.8–1.3 optimal, 1.3–1.5 raised, >1.5 risk.
+    const segs = [[0.8, 'var(--rn-warning)'], [0.5, 'var(--rn-good)'], [0.2, 'var(--rn-warning)'], [0.5, 'var(--rn-critical)']];
+    $('rnAcwrScale').innerHTML = segs.map((s) => '<div class="rn-scale-seg" style="width:' + (s[0] / 2) * 100 + '%;background:' + s[1] + ';opacity:.55"></div>').join('')
+      + [0.8, 1.3, 1.5].map((v) => '<span class="rn-scale-tick" style="left:' + (v / 2) * 100 + '%">' + fmtNum(v, 1) + '</span>').join('')
+      + (ratio != null ? '<span class="rn-scale-pin" style="left:' + Math.min(100, (ratio / 2) * 100) + '%"></span>' : '');
+
+    barChart($('rnTrimpChart'), bars, { fmtY: (v) => fmtNum(v), minMax: 50, height: 170, aria: 'TRIMP pro Lauf', empty: 'Keine Läufe mit Herzfrequenz in den letzten 6 Wochen' });
+  }
+
+  function renderPrognosis() {
+    const tiles = TARGETS.map((t) => {
+      const pr = riegelPrognosis(t.m);
+      return pr
+        ? tile(t.label, fmtDuration(pr.t) + EST, fmtPace(pr.t / (t.m / 1000)) + ' /km · aus ' + esc(pr.source))
+        : tile(t.label, '–', 'keine Läufe in den letzten 6 Wochen');
+    });
+    $('rnPrognosis').innerHTML = tiles.join('');
+    $('rnPrognosisHint').textContent = 'Riegel-Formel T2 = T1 × (D2/D1)^1,06, jeweils aus dem stärksten Lauf oder Abschnitt der letzten 6 Wochen.';
+  }
+
+  function renderRecords() {
+    const rec = (label, field, meters) => {
+      const b = bestStretch(field);
+      return b
+        ? tile(label, fmtDuration(b.t), fmtPace(b.t / (meters / 1000)) + ' /km · ' + fmtDate(b.run.performed_at))
+        : tile(label, '–', 'braucht Strava-Streams');
+    };
+    let longest = null;
+    store.runs.forEach((r) => { if (!longest || r.distance_m > longest.distance_m) longest = r; });
+    $('rnRecords').innerHTML =
+      rec('Schnellster 1 km', 'best_1k_s', 1000)
+      + rec('Schnellste 5 km', 'best_5k_s', 5000)
+      + rec('Schnellste 10 km', 'best_10k_s', 10000)
+      + (longest
+        ? tile('Längster Lauf', fmtKm(longest.distance_m) + ' km', fmtDuration(longest.duration_s) + ' · ' + fmtDate(longest.performed_at))
+        : tile('Längster Lauf', '–'));
+  }
+
+  $('rnHrForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const st = $('rnHrStatus');
+    const maxText = $('rnMaxHr').value.trim(), restText = $('rnRestHr').value.trim();
+    const max = maxText ? Number(maxText) : null;
+    const rest = restText ? Number(restText) : null;
+    if (max != null && !(Number.isInteger(max) && max >= 100 && max <= 240)) { st.textContent = 'Max-HF muss zwischen 100 und 240 liegen.'; st.classList.add('is-error'); return; }
+    if (rest != null && !(Number.isInteger(rest) && rest >= 25 && rest <= 120)) { st.textContent = 'Ruhe-HF muss zwischen 25 und 120 liegen.'; st.classList.add('is-error'); return; }
+    if (max != null && rest != null && max <= rest + 20) { st.textContent = 'Max-HF muss deutlich über der Ruhe-HF liegen.'; st.classList.add('is-error'); return; }
+    try { localStorage.setItem(TRIMP_KEY, $('rnTrimpSex').value); } catch (err) {}
+    st.classList.remove('is-error');
+    st.textContent = 'Speichere…';
+    const { error } = await sb.from('settings').update({ max_hr: max, resting_hr: rest, updated_at: new Date().toISOString() }).eq('id', true);
+    if (error) { st.textContent = 'Speichern fehlgeschlagen: ' + error.message; st.classList.add('is-error'); return; }
+    store.settings = Object.assign({}, store.settings, { max_hr: max, resting_hr: rest });
+    st.textContent = 'Gespeichert.';
+    renderAnalysis();
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Strava                                                            */
+  /* ---------------------------------------------------------------- */
+
+  let strava = null;
+  let syncing = false;
+  let autoSynced = false;
+
+  async function callStrava(action, extra) {
+    const { data, error } = await sb.functions.invoke('strava', { body: Object.assign({ action }, extra || {}) });
+    if (error) {
+      let msg = error.message;
+      try { const body = await error.context.json(); if (body && body.error) msg = body.error; } catch (e) {}
+      throw new Error(msg);
+    }
+    return data;
+  }
+
+  function stravaLine(text, isError) {
+    $('rnStravaLine').innerHTML = text;
+    $('rnStravaLine').classList.toggle('is-error', !!isError);
+  }
+
+  function ago(iso) {
+    const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+    if (min < 1) return 'gerade eben';
+    if (min < 60) return 'vor ' + min + ' Min';
+    if (min < 48 * 60) return 'vor ' + Math.round(min / 60) + ' Std';
+    return 'am ' + fmtDate(iso);
+  }
+
+  function renderStrava() {
+    const main = $('rnStravaMain');
+    const disc = $('rnStravaDisconnect');
+    main.disabled = syncing;
+    if (!strava) return;
+    if (!strava.configured) {
+      stravaLine('Strava-App noch nicht eingerichtet: <code>STRAVA_CLIENT_ID</code> und <code>STRAVA_CLIENT_SECRET</code> fehlen in den Supabase-Secrets.');
+      main.hidden = true; disc.hidden = true;
+    } else if (!strava.connected) {
+      if (!syncing) stravaLine('Nicht verbunden. Danach kommen deine Läufe automatisch.');
+      main.hidden = false; main.textContent = 'Mit Strava verbinden';
+      disc.hidden = true;
+    } else {
+      if (!syncing) {
+        stravaLine('Verbunden' + (strava.athlete_name ? ' als ' + esc(strava.athlete_name) : '')
+          + ' · ' + (strava.last_sync_at ? 'synchronisiert ' + ago(strava.last_sync_at) : 'noch nicht synchronisiert'));
+      }
+      main.hidden = false; main.textContent = syncing ? 'Synchronisiere…' : 'Jetzt synchronisieren';
+      disc.hidden = syncing;
+    }
+  }
+
+  async function refreshStrava() {
+    try {
+      strava = await callStrava('status');
+      renderStrava();
+    } catch (e) {
+      stravaLine('Strava-Status nicht abrufbar: ' + esc(e.message), true);
+      return;
+    }
+    const stale = !strava.last_sync_at || Date.now() - new Date(strava.last_sync_at).getTime() > 60 * 60000;
+    if (strava.connected && stale && !autoSynced) {
+      autoSynced = true;
+      runSync();
+    }
+  }
+
+  // One call fetches at most 15 streams, so keep calling while some are
+  // outstanding — unless Strava's rate limit kicks in.
+  async function runSync() {
+    if (syncing) return;
+    syncing = true;
+    renderStrava();
+    const total = { imported: 0, matched: 0, updated: 0, streams_fetched: 0 };
+    let last = null, failure = null;
+    try {
+      for (let round = 0; round < 12; round++) {
+        stravaLine('Synchronisiere… ' + (total.streams_fetched ? total.streams_fetched + ' Streams geladen' : 'Aktivitäten werden gelesen'));
+        last = await callStrava('sync');
+        Object.keys(total).forEach((k) => { total[k] += last[k] || 0; });
+        if (last.rate_limited || !last.streams_remaining || !last.streams_fetched) break;
+      }
+    } catch (e) {
+      failure = e;
+    }
+    syncing = false;
+    await reloadAll();
+    try { strava = await callStrava('status'); } catch (e) {}
+    renderStrava();
+    if (failure) {
+      stravaLine('Synchronisierung fehlgeschlagen: ' + esc(failure.message), true);
+    } else {
+      const parts = [];
+      if (total.imported) parts.push(total.imported + ' neu');
+      if (total.matched) parts.push(total.matched + ' mit manuellen Einträgen zusammengeführt');
+      if (total.streams_fetched) parts.push(total.streams_fetched + ' Streams');
+      let msg = 'Synchronisiert' + (parts.length ? ': ' + parts.join(' · ') : ' – nichts Neues');
+      if (last && last.rate_limited) msg += '. Strava-Limit erreicht, der Rest folgt beim nächsten Sync.';
+      else if (last && last.streams_remaining) msg += '. ' + last.streams_remaining + ' Streams stehen noch aus.';
+      stravaLine(msg);
+    }
+  }
+
+  $('rnStravaMain').addEventListener('click', async () => {
+    if (!strava) return;
+    if (strava.connected) { runSync(); return; }
+    try {
+      const { url } = await callStrava('connect', { return_to: location.origin + location.pathname });
+      location.href = url;
+    } catch (e) {
+      stravaLine('Verbinden fehlgeschlagen: ' + esc(e.message), true);
+    }
+  });
+
+  $('rnStravaDisconnect').addEventListener('click', async () => {
+    if (!confirm('Strava trennen? Bereits synchronisierte Läufe bleiben erhalten.')) return;
+    try {
+      await callStrava('disconnect');
+      await refreshStrava();
+    } catch (e) {
+      stravaLine('Trennen fehlgeschlagen: ' + esc(e.message), true);
+    }
+  });
+
+  /* ---------------------------------------------------------------- */
+  /* Manual entry                                                      */
+  /* ---------------------------------------------------------------- */
+
+  function formStatus(text, isError) {
     $('rnStatus').textContent = text || '';
     $('rnStatus').classList.toggle('is-error', !!isError);
   }
@@ -5794,48 +7253,13 @@ const CONFIG = {
     $('rnPace').textContent = km && sec ? fmtPace(sec / km) : '–:––';
   }
 
-  function renderList(runs) {
-    const list = $('rnList');
-    if (!runs.length) {
-      list.innerHTML = '<li class="tr-muted">Noch keine Läufe.</li>';
-      return;
-    }
-    const head = '<li class="rn-row rn-row-head"><span>Datum</span><span>km</span><span>Zeit</span><span>Pace</span><span>Ø-HF</span></li>';
-    list.innerHTML = head + runs.map(r => {
-      const d = new Date(r.performed_at);
-      const date = String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.';
-      const pace = r.pace_s_per_km != null ? Number(r.pace_s_per_km) : r.duration_s / (r.distance_m / 1000);
-      return '<li class="rn-row">'
-        + '<span class="rn-date">' + date + '</span>'
-        + '<span class="rn-dist">' + fmtKm(r.distance_m)
-        +   (r.source === 'strava' ? '<span class="rn-src">STRAVA</span>' : '') + '</span>'
-        + '<span>' + fmtDuration(r.duration_s) + '</span>'
-        + '<span>' + fmtPace(pace) + '</span>'
-        + '<span class="' + (r.avg_hr ? '' : 'rn-muted') + '">' + (r.avg_hr || '–') + '</span>'
-        + '</li>';
-    }).join('');
-  }
-
-  async function loadRuns() {
-    if (!sb) return;
-    const { data, error } = await sb.from('runs')
-      .select('id, performed_at, distance_m, duration_s, pace_s_per_km, avg_hr, source')
-      .order('performed_at', { ascending: false })
-      .limit(20);
-    if (error) {
-      $('rnList').innerHTML = '<li class="tr-muted">Läufe konnten nicht geladen werden: ' + error.message.replace(/</g, '&lt;') + '</li>';
-      return;
-    }
-    renderList(data);
-  }
-
   $('rnDate').value = todayInput();
   $('rnDistance').addEventListener('input', updatePace);
   $('rnDuration').addEventListener('input', updatePace);
 
   $('rnForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    if (!sb) { status('Nicht verbunden.', true); return; }
+    if (!sb) { formStatus('Nicht verbunden.', true); return; }
 
     const dateVal = $('rnDate').value;
     const km = parseKm($('rnDistance').value);
@@ -5845,11 +7269,11 @@ const CONFIG = {
     const hr = hrText ? Number(hrText) : null;
     const elev = elevText ? Number(elevText) : null;
 
-    if (!dateVal) return status('Bitte ein Datum wählen.', true);
-    if (!km || km < 0.1 || km > 500) return status('Distanz in km eingeben, z. B. 10,5.', true);
-    if (!sec || sec < 30) return status('Zeit als mm:ss oder h:mm:ss eingeben.', true);
-    if (hr != null && !(Number.isInteger(hr) && hr >= 60 && hr <= 240)) return status('Ø-HF muss zwischen 60 und 240 liegen.', true);
-    if (elev != null && !(Number.isInteger(elev) && elev >= 0 && elev <= 10000)) return status('Höhenmeter müssen zwischen 0 und 10000 liegen.', true);
+    if (!dateVal) return formStatus('Bitte ein Datum wählen.', true);
+    if (!km || km < 0.1 || km > 500) return formStatus('Distanz in km eingeben, z. B. 10,5.', true);
+    if (!sec || sec < 30) return formStatus('Zeit als mm:ss oder h:mm:ss eingeben.', true);
+    if (hr != null && !(Number.isInteger(hr) && hr >= 60 && hr <= 240)) return formStatus('Ø-HF muss zwischen 60 und 240 liegen.', true);
+    if (elev != null && !(Number.isInteger(elev) && elev >= 0 && elev <= 10000)) return formStatus('Höhenmeter müssen zwischen 0 und 10000 liegen.', true);
 
     // Noon local time, so the run never slips to a neighbouring day.
     const [y, m, d] = dateVal.split('-').map(Number);
@@ -5865,20 +7289,92 @@ const CONFIG = {
     };
 
     $('rnSave').disabled = true;
-    status('Speichere…');
+    formStatus('Speichere…');
     const { error } = await sb.from('runs').insert(row);
     $('rnSave').disabled = false;
-    if (error) return status('Speichern fehlgeschlagen: ' + error.message, true);
+    if (error) return formStatus('Speichern fehlgeschlagen: ' + error.message, true);
 
-    ['rnDistance', 'rnDuration', 'rnHr', 'rnElevation', 'rnNotes'].forEach(id => { $(id).value = ''; });
+    ['rnDistance', 'rnDuration', 'rnHr', 'rnElevation', 'rnNotes'].forEach((id) => { $(id).value = ''; });
     updatePace();
-    status('Gespeichert.');
-    loadRuns();
+    formStatus('Gespeichert.');
+    reloadAll();
   });
+
+  /* ---------------------------------------------------------------- */
+  /* Pages + wiring                                                    */
+  /* ---------------------------------------------------------------- */
+
+  function viewActive() { return $('view-laufen').classList.contains('is-active'); }
+
+  function showPage(name) {
+    page = name;
+    $('rnOverview').hidden = name !== 'overview';
+    $('rnAnalysis').hidden = name !== 'analysis';
+    $('rnDetail').hidden = name !== 'detail';
+    document.querySelectorAll('.rn-subnav-btn').forEach((b) => {
+      b.classList.toggle('is-active', b.dataset.rnPage === (name === 'detail' ? pageBeforeDetail : name));
+    });
+    if (name !== 'detail' && map) { map.remove(); map = null; }
+    hideTip();
+  }
+
+  // Charts measure their container, so they only draw while visible.
+  function renderVisible() {
+    if (!sb || !viewActive()) return;
+    if (page === 'overview') renderOverview();
+    else if (page === 'analysis') renderAnalysis();
+    else if (page === 'detail') renderDetail();
+  }
+
+  document.querySelectorAll('.rn-subnav-btn').forEach((b) => {
+    b.addEventListener('click', () => { showPage(b.dataset.rnPage); renderVisible(); });
+  });
+  $('rnBack').addEventListener('click', () => { store.detail = null; showPage(pageBeforeDetail); renderVisible(); });
+
+  $('rnList').addEventListener('click', (e) => {
+    const row = e.target.closest('[data-run]');
+    if (row) openRun(row.dataset.run);
+  });
+  $('rnList').addEventListener('keydown', (e) => {
+    const row = e.target.closest('[data-run]');
+    if (row && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openRun(row.dataset.run); }
+  });
+
+  document.querySelectorAll('.tab-btn[data-view="laufen"]').forEach((b) => {
+    b.addEventListener('click', () => setTimeout(renderVisible, 0));
+  });
+
+  let resizeTimer = null;
+  let lastWidth = window.innerWidth;
+  window.addEventListener('resize', () => {
+    if (window.innerWidth === lastWidth) return;
+    lastWidth = window.innerWidth;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (page !== 'detail') renderVisible(); else if (store.detail && !store.detail.loading) renderStreamChart(store.detail); }, 150);
+  });
+
+  // Strava's OAuth redirect lands back here with #strava=<result>.
+  function consumeStravaHash() {
+    const m = /^#strava=([\w-]+)/.exec(location.hash);
+    if (!m) return;
+    history.replaceState(null, '', location.pathname + location.search);
+    const tab = document.querySelector('.tab-btn[data-view="laufen"]');
+    if (tab) tab.click();
+    const messages = {
+      verbunden: 'Mit Strava verbunden – lade deine Läufe…',
+      abgelehnt: 'Strava-Verbindung abgebrochen.',
+      'ohne-aktivitaeten': 'Ohne Zugriff auf Aktivitäten kann nichts synchronisiert werden. Bitte beim Verbinden den Haken setzen.',
+      fehler: 'Strava-Verbindung fehlgeschlagen. Bitte erneut versuchen.'
+    };
+    stravaLine(esc(messages[m[1]] || 'Strava: ' + m[1]), m[1] !== 'verbunden');
+    if (m[1] === 'verbunden') autoSynced = false;
+  }
 
   window.addEventListener('po-auth-ready', (e) => {
     sb = e.detail;
-    loadRuns();
+    consumeStravaHash();
+    reloadAll();
+    refreshStrava();
   });
 })();
 </script>
