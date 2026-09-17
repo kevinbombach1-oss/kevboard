@@ -1278,12 +1278,35 @@
   .ts-scheme-dots { display: flex; gap: 2px; }
   .ts-scheme-dots span { width: 9px; height: 9px; border-radius: 2px; }
 
+  /* The figures stay folded away; the heatmap is the point of the section. */
+  .ts-cards-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 7px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-tertiary);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+  }
+  .ts-cards-toggle:hover { color: var(--text-secondary); background: rgba(255, 255, 255, 0.06); }
+  .ts-cards-toggle[aria-expanded="true"] { color: var(--text-primary); }
+  .ts-cards-arrow { font-size: 13px; transition: transform 0.2s ease; }
+  .ts-cards-toggle[aria-expanded="true"] .ts-cards-arrow { transform: rotate(180deg); }
+
   .ts-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 10px;
     margin-bottom: 16px;
   }
+  .ts-cards[hidden] { display: none; }
   .ts-card {
     padding: 16px 18px;
     border-radius: var(--card-radius);
@@ -3014,7 +3037,11 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   <div class="gm-status" id="tsStatus"></div>
 
   <div id="tsOverview">
-    <div class="ts-cards">
+    <button type="button" class="ts-cards-toggle" id="tsCardsToggle" aria-expanded="false" aria-controls="tsCards">
+      <span>Kennzahlen</span>
+      <span class="ts-cards-arrow">▾</span>
+    </button>
+    <div class="ts-cards" id="tsCards" hidden>
       <div class="ts-card"><div class="ts-card-label">Erledigte Tasks</div><div class="ts-card-value" id="tsDone">–</div><div class="ts-card-sub" id="tsDoneSub"></div></div>
       <div class="ts-card"><div class="ts-card-label">Aktive Tage</div><div class="ts-card-value" id="tsActive">–</div><div class="ts-card-sub" id="tsActiveSub"></div></div>
       <div class="ts-card"><div class="ts-card-label">Aktueller Streak</div><div class="ts-card-value" id="tsStreak">–</div><div class="ts-card-sub">Tage mit ≥ 50 % vom Ziel</div></div>
@@ -5131,6 +5158,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   const TS = window.TaskStats;
   const SCHEME_KEY = 'ts_scheme';
   const TARGET_KEY = 'ts_daily_target';
+  const CARDS_KEY = 'ts_cards_open';
   const DEFAULT_TARGET = 180;   // minutes of finished work for the top step
   const SYNC_STATE_KEY = 'task_sync_state_v1';
   const SCHEMES = [
@@ -5535,6 +5563,19 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     try { localStorage.setItem(SCHEME_KEY, b.dataset.scheme); } catch (err) {}
     applyScheme(b.dataset.scheme);
   });
+  function applyCards(open) {
+    $('tsCards').hidden = !open;
+    $('tsCardsToggle').setAttribute('aria-expanded', String(open));
+  }
+  let cardsOpen = false;
+  try { cardsOpen = localStorage.getItem(CARDS_KEY) === '1'; } catch (e) {}
+  applyCards(cardsOpen);
+  $('tsCardsToggle').addEventListener('click', function () {
+    cardsOpen = !cardsOpen;
+    applyCards(cardsOpen);
+    try { localStorage.setItem(CARDS_KEY, cardsOpen ? '1' : '0'); } catch (e) {}
+  });
+
   $('tsTarget').value = String(dailyTarget());
   $('tsTarget').addEventListener('change', function () {
     try { localStorage.setItem(TARGET_KEY, $('tsTarget').value); } catch (err) {}
