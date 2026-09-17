@@ -689,6 +689,41 @@
     color: #AFC0D2;
   }
 
+  /* Effort — one clock cycling through the sizes. Feeds the heatmap. */
+
+  .goal-effort {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 3px 5px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--text-tertiary);
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .goal-item:hover .goal-effort { opacity: 0.65; }
+  .goal-effort:hover { opacity: 1; }
+  .goal-effort.is-set {
+    opacity: 1;
+    padding: 3px 9px 3px 7px;
+    background: rgba(230, 171, 78, 0.16);
+    border-color: rgba(230, 171, 78, 0.45);
+    color: #E6AB4E;
+  }
+  .goal-effort-label { font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em; }
+
+  /* Touch screens have no hover, so both controls stay visible there. */
+  @media (hover: none) {
+    .goal-prio, .goal-sub .goal-prio, .goal-effort { opacity: 0.7; }
+  }
+
   /* Queued owns the left stripe, so priority washes the whole row instead
      and the two can sit on the same goal without overwriting each other. */
   .goal-item.is-prio-high {
@@ -1273,6 +1308,8 @@
   .ts-card-sub { margin-top: 6px; font-size: 11px; color: var(--text-tertiary); min-height: 14px; }
 
   .ts-heat-card { padding-bottom: 16px; }
+  .ts-heat-meta { font-size: 11px; color: var(--text-tertiary); margin-bottom: 12px; }
+  .ts-target { width: 100%; margin-top: 8px; color-scheme: dark; }
   .ts-heat-scroll { overflow-x: auto; padding-bottom: 4px; }
   .ts-heat {
     display: grid;
@@ -2957,6 +2994,17 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       <div class="ts-settings" id="tsSettings" hidden>
         <div class="gm-eyebrow">Farbschema</div>
         <div class="ts-schemes" id="tsSchemes"></div>
+        <div class="gm-eyebrow" style="margin-top:16px">Tagesziel</div>
+        <select class="goal-input ts-target" id="tsTarget">
+          <option value="60">1 Stunde</option>
+          <option value="90">1,5 Stunden</option>
+          <option value="120">2 Stunden</option>
+          <option value="180">3 Stunden</option>
+          <option value="240">4 Stunden</option>
+          <option value="300">5 Stunden</option>
+          <option value="360">6 Stunden</option>
+        </select>
+        <div class="ts-hint" style="margin-top:6px;max-width:190px">Geschaffter Aufwand für die stärkste Farbe</div>
       </div>
     </div>
   </div>
@@ -2967,13 +3015,14 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     <div class="ts-cards">
       <div class="ts-card"><div class="ts-card-label">Erledigte Tasks</div><div class="ts-card-value" id="tsDone">–</div><div class="ts-card-sub" id="tsDoneSub"></div></div>
       <div class="ts-card"><div class="ts-card-label">Aktive Tage</div><div class="ts-card-value" id="tsActive">–</div><div class="ts-card-sub" id="tsActiveSub"></div></div>
-      <div class="ts-card"><div class="ts-card-label">Aktueller Streak</div><div class="ts-card-value" id="tsStreak">–</div><div class="ts-card-sub">Tage mit ≥ 50 %</div></div>
+      <div class="ts-card"><div class="ts-card-label">Aktueller Streak</div><div class="ts-card-value" id="tsStreak">–</div><div class="ts-card-sub">Tage mit ≥ 50 % vom Ziel</div></div>
       <div class="ts-card"><div class="ts-card-label">Längster Streak</div><div class="ts-card-value" id="tsLongest">–</div><div class="ts-card-sub" id="tsLongestSub"></div></div>
       <div class="ts-card"><div class="ts-card-label">Produktivste Stunde</div><div class="ts-card-value" id="tsHour">–</div><div class="ts-card-sub" id="tsHourSub"></div></div>
       <div class="ts-card"><div class="ts-card-label">Ø Erledigungsquote</div><div class="ts-card-value" id="tsRate">–</div><div class="ts-card-sub" id="tsRateSub"></div></div>
     </div>
 
     <div class="gm-card ts-heat-card">
+      <div class="ts-heat-meta" id="tsHeatMeta"></div>
       <div class="ts-heat-scroll" id="tsHeatScroll">
         <div class="ts-heat" id="tsHeat"></div>
       </div>
@@ -3839,6 +3888,42 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   };
   const PRIO_SHORT = { high: 'HOCH', medium: 'MITTEL', low: 'NIEDRIG' };
 
+  // How much work a task is, in minutes. The statistics colour a day by the
+  // effort actually finished, so a 15-minute errand can't look like a
+  // four-hour block. Unset tasks count as DEFAULT_EFFORT.
+  const EFFORT_CYCLE = [null, 15, 30, 60, 120, 240];
+  const DEFAULT_EFFORT = 30;
+
+  function effortLabel(min) {
+    if (min % 60 === 0) return (min / 60) + 'h';
+    if (min > 60) return Math.floor(min / 60) + 'h' + (min % 60);
+    return min + 'm';
+  }
+
+  function buildEffortControl(effort, onCycle) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'goal-effort' + (effort ? ' is-set' : '');
+    btn.title = effort ? 'Aufwand: ' + effortLabel(effort) : 'Aufwand setzen (Standard ' + DEFAULT_EFFORT + ' min)';
+
+    const clock = document.createElement('span');
+    clock.textContent = '⏱';
+    btn.appendChild(clock);
+
+    if (effort) {
+      const label = document.createElement('span');
+      label.className = 'goal-effort-label';
+      label.textContent = effortLabel(effort);
+      btn.appendChild(label);
+    }
+
+    btn.addEventListener('click', function () {
+      const at = EFFORT_CYCLE.indexOf(effort || null);
+      onCycle(EFFORT_CYCLE[(at + 1) % EFFORT_CYCLE.length]);
+    });
+    return btn;
+  }
+
   // Shared by goals and their steps; the caller decides where it is stored.
   function buildPrioControl(priority, small, onCycle) {
     const btn = document.createElement('button');
@@ -4065,6 +4150,15 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       reload();
     });
 
+    const effortBtn = buildEffortControl(goal.effort, function (next) {
+      const goals = storeGet(key) || [];
+      if (!goals[idx]) return;
+      if (next) goals[idx].effort = next;
+      else delete goals[idx].effort;
+      storeSet(key, goals);
+      reload();
+    });
+
     const addSubBtn = document.createElement('button');
     addSubBtn.type = 'button';
     addSubBtn.className = 'goal-sub-add';
@@ -4107,6 +4201,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     li.appendChild(cb);
     li.appendChild(text);
     if (count) li.appendChild(count);
+    li.appendChild(effortBtn);
     li.appendChild(prioBtn);
     li.appendChild(addSubBtn);
     li.appendChild(queueBtn);
@@ -4134,6 +4229,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   function carryGoal(goal) {
     const copy = { text: goal.text, done: false };
     if (goal.priority) copy.priority = goal.priority;
+    if (goal.effort) copy.effort = goal.effort;
 
     const subs = subsOf(goal);
     if (subs.length) {
@@ -4787,7 +4883,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       JSON.parse(prev.json).forEach(function (t) {
         const gone = !now.has(t.text) && next.has(t.text);
         if (!t.done && gone && !moved.some(function (m) { return m.text === t.text; })) {
-          moved.push({ text: t.text, priority: t.priority || null });
+          moved.push({ text: t.text, priority: t.priority || null, effort: t.effort || null });
         }
       });
     }
@@ -4974,18 +5070,34 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
 
   // One day's figures. Only top-level tasks count; a task with steps is done
   // once all steps are. Moved tasks count as planned but not done. A day
-  // without planned tasks has no score.
+  // without planned tasks has no score. `effortDone` is what the heatmap
+  // colours by: minutes of work actually finished, not the ratio.
+  const DEFAULT_EFFORT = 30;
+
   function dayStats(row) {
     const tasks = Array.isArray(row.tasks) ? row.tasks : [];
     const moved = Array.isArray(row.moved) ? row.moved : [];
     const items = tasks.map(function (t) {
-      return { text: t.text, done: !!t.done, doneAt: t.done && t.doneAt ? t.doneAt : null, category: categoryOf(t.text) };
+      return {
+        text: t.text, done: !!t.done, doneAt: t.done && t.doneAt ? t.doneAt : null,
+        category: categoryOf(t.text), effort: t.effort || DEFAULT_EFFORT
+      };
     }).concat(moved.map(function (m) {
-      return { text: m.text, done: false, doneAt: null, category: categoryOf(m.text), moved: true };
+      return {
+        text: m.text, done: false, doneAt: null,
+        category: categoryOf(m.text), effort: m.effort || DEFAULT_EFFORT, moved: true
+      };
     }));
     const planned = items.length;
     const done = items.filter(function (t) { return t.done; }).length;
-    return { day: row.day, planned: planned, done: done, score: planned ? done / planned : null, items: items };
+    const effortPlanned = items.reduce(function (a, t) { return a + t.effort; }, 0);
+    const effortDone = items.reduce(function (a, t) { return a + (t.done ? t.effort : 0); }, 0);
+    return {
+      day: row.day, planned: planned, done: done,
+      score: planned ? done / planned : null,
+      effortPlanned: effortPlanned, effortDone: effortDone,
+      items: items
+    };
   }
 
   // Every day up to today, oldest first.
@@ -5016,6 +5128,8 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   const $ = function (id) { return document.getElementById(id); };
   const TS = window.TaskStats;
   const SCHEME_KEY = 'ts_scheme';
+  const TARGET_KEY = 'ts_daily_target';
+  const DEFAULT_TARGET = 180;   // minutes of finished work for the top step
   const SYNC_STATE_KEY = 'task_sync_state_v1';
   const SCHEMES = [
     { id: 'bernstein', label: 'Bernstein', dots: ['#6b4410', '#c08526', '#f8d79a'] },
@@ -5044,6 +5158,21 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     });
   }
   function pct(v) { return Math.round(v * 100) + ' %'; }
+
+  function fmtMinutes(min) {
+    min = Math.round(min);
+    if (min < 60) return min + ' min';
+    const h = Math.floor(min / 60), m = min % 60;
+    return m ? h + ' h ' + m + ' min' : h + ' h';
+  }
+
+  // The day's colour measures finished effort against this, so a full day
+  // of small errands can't look like a day of deep work.
+  function dailyTarget() {
+    let v = 0;
+    try { v = Number(localStorage.getItem(TARGET_KEY)); } catch (e) {}
+    return v > 0 ? v : DEFAULT_TARGET;
+  }
 
   /* ---------------------------------------------------------------- */
   /* Data                                                              */
@@ -5090,9 +5219,9 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     return all.length ? all[0].day : today;
   }
 
-  // Days in a row with a score of at least 50 %. Today only extends a
-  // streak once it gets there; until then it doesn't break one either.
-  function isGoodDay(s) { return !!s && s.score != null && s.score >= 0.5; }
+  // Days in a row that reached at least half the daily target. Today only
+  // extends a streak once it gets there; until then it doesn't break one.
+  function isGoodDay(s) { return !!s && s.score != null && s.effortDone >= dailyTarget() * 0.5; }
 
   function currentStreak(byDay, today) {
     let n = 0;
@@ -5111,13 +5240,16 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     return best;
   }
 
+  // Steps by how much of the daily target was finished, so 1 of 1 small
+  // task stays pale while a long day of work glows even if something
+  // stayed open.
   function level(s) {
-    if (!s || s.score == null || s.done === 0) return 0;
-    const p = s.score * 100;
-    if (p >= 100) return 5;
-    if (p > 75) return 4;
-    if (p > 50) return 3;
-    if (p > 25) return 2;
+    if (!s || s.score == null || s.effortDone === 0) return 0;
+    const p = s.effortDone / dailyTarget();
+    if (p >= 1) return 5;
+    if (p > 0.75) return 4;
+    if (p > 0.5) return 3;
+    if (p > 0.25) return 2;
     return 1;
   }
 
@@ -5149,8 +5281,11 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     const withEntry = days.filter(function (s) { return s.score != null; });
     const active = days.filter(function (s) { return s.done > 0; }).length;
 
+    const effortDone = days.reduce(function (a, s) { return a + s.effortDone; }, 0);
     $('tsDone').textContent = done;
-    $('tsDoneSub').textContent = planned ? 'von ' + planned + ' geplanten' : 'noch nichts geplant';
+    $('tsDoneSub').textContent = planned
+      ? 'von ' + planned + ' geplanten · ' + fmtMinutes(effortDone) + ' geschafft'
+      : 'noch nichts geplant';
 
     $('tsActive').innerHTML = active + unit(active, 'Tag', 'Tage');
     $('tsActiveSub').textContent = withEntry.length ? 'von ' + withEntry.length + ' Tagen mit Tasks' : '';
@@ -5234,8 +5369,17 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
 
     $('tsLegend').innerHTML = [0, 1, 2, 3, 4, 5].map(function (l) {
       return '<span style="background:' + (l ? 'var(--ts-' + l + ')' : 'var(--ts-empty)') + '" title="'
-        + ['kein Eintrag', '1–25 %', '26–50 %', '51–75 %', '76–99 %', '100 %'][l] + '"></span>';
+        + ['nichts geschafft', 'bis 25 %', '26–50 %', '51–75 %', '76–99 %', 'Tagesziel erreicht'][l] + ' vom Tagesziel"></span>';
     }).join('');
+
+    const withEffort = Object.keys(byDay).filter(function (d) {
+      return d >= start && d <= today && byDay[d].effortDone > 0;
+    });
+    const avg = withEffort.length
+      ? withEffort.reduce(function (a, d) { return a + byDay[d].effortDone; }, 0) / withEffort.length
+      : 0;
+    $('tsHeatMeta').textContent = 'Farbe = geschaffter Aufwand · Tagesziel ' + fmtMinutes(dailyTarget())
+      + (avg ? ' · Ø ' + fmtMinutes(avg) + ' an aktiven Tagen' : '');
 
     const scroll = $('tsHeatScroll');
     scroll.scrollLeft = scroll.scrollWidth;
@@ -5299,7 +5443,8 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     if (!s || s.score == null) return '<div class="ts-tooltip-date">' + date + '</div><div>Kein Eintrag</div>';
     return '<div class="ts-tooltip-date">' + date + '</div>'
       + '<div><strong>' + s.done + ' von ' + s.planned + '</strong> Tasks erledigt</div>'
-      + '<div>Score ' + pct(s.score) + '</div>';
+      + '<div>' + fmtMinutes(s.effortDone) + ' von ' + fmtMinutes(s.effortPlanned) + ' Aufwand</div>'
+      + '<div class="ts-tooltip-date">' + pct(s.effortDone / dailyTarget()) + ' vom Tagesziel</div>';
   }
 
   function showTooltip(cell) {
@@ -5387,6 +5532,11 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     if (!b) return;
     try { localStorage.setItem(SCHEME_KEY, b.dataset.scheme); } catch (err) {}
     applyScheme(b.dataset.scheme);
+  });
+  $('tsTarget').value = String(dailyTarget());
+  $('tsTarget').addEventListener('change', function () {
+    try { localStorage.setItem(TARGET_KEY, $('tsTarget').value); } catch (err) {}
+    render();
   });
   document.addEventListener('click', function () {
     if (!$('tsSettings').hidden) {
