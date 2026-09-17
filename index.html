@@ -264,6 +264,29 @@
                 stroke-dashoffset 0.7s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  .ring-goal-track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 5;
+  }
+
+  .ring-goal-fill {
+    fill: none;
+    stroke: #E6AB4E;
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 0.7s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.4s ease;
+  }
+  .ring-goal-fill.is-done { stroke: #6BE3A4; }
+
+  .ring-done {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .ring-done:empty { display: none; }
+  .ring-done strong { color: var(--text-primary); }
+
   .ring-overlay {
     position: absolute;
     inset: 0;
@@ -1408,6 +1431,18 @@
   .ts-heat-card { padding-bottom: 16px; }
   .ts-heat-meta { font-size: 11px; color: var(--text-tertiary); margin-bottom: 12px; }
   .ts-target { width: 100%; margin-top: 8px; color-scheme: dark; }
+  .ts-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    max-width: 190px;
+    line-height: 1.35;
+  }
+  .ts-check input { accent-color: #E6AB4E; width: 15px; height: 15px; flex: 0 0 auto; }
   .ts-heat-scroll { overflow-x: auto; padding-bottom: 4px; }
   .ts-heat {
     display: grid;
@@ -1445,6 +1480,27 @@
   .ts-cell[data-level="4"] { background: var(--ts-4); }
   .ts-cell[data-level="5"] { background: var(--ts-5); }
   .ts-cell.is-today { box-shadow: 0 0 0 2px #0f0f10, 0 0 0 3.5px var(--ts-5); }
+
+  /* Gym and run days carry a corner mark, so the calendar shows the whole
+     day at a glance, not just the tasks. */
+  .ts-cell[data-sport] { position: relative; }
+  .ts-cell[data-sport]::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+  }
+  .ts-cell[data-sport="training"]::after { background: #FFFFFF; }
+  .ts-cell[data-sport="run"]::after { background: #6BE3A4; }
+  .ts-cell[data-sport="both"]::after {
+    background: linear-gradient(135deg, #FFFFFF 50%, #6BE3A4 50%);
+  }
+  .ts-legend-sport { display: inline-flex; align-items: center; gap: 5px; margin-right: auto; }
+  .ts-legend-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
   .ts-cell:not(.is-outside):hover, .ts-cell:focus-visible { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.7); }
 
   .ts-legend {
@@ -3105,6 +3161,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
           <option value="600">10 Stunden</option>
         </select>
         <div class="ts-hint" style="margin-top:6px;max-width:190px">Geschaffter Aufwand für die stärkste Farbe</div>
+        <label class="ts-check"><input type="checkbox" id="tsSport" checked> Training und Läufe mitzählen</label>
       </div>
     </div>
   </div>
@@ -3131,6 +3188,10 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
         <div class="ts-heat" id="tsHeat"></div>
       </div>
       <div class="ts-legend">
+        <span class="ts-legend-sport">
+          <span class="ts-legend-dot" style="background:#FFFFFF"></span>Training
+          <span class="ts-legend-dot" style="background:#6BE3A4;margin-left:8px"></span>Lauf
+        </span>
         <span>weniger</span>
         <span class="ts-legend-cells" id="tsLegend"></span>
         <span>mehr</span>
@@ -3180,6 +3241,10 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       <circle class="ring-track" cx="60" cy="60" r="52"></circle>
       <circle class="ring-fill" id="ringFill" cx="60" cy="60" r="52"
               transform="rotate(-90 60 60)" filter="url(#ringGlow)"></circle>
+      <!-- Inner ring: how much of today's target is already done. -->
+      <circle class="ring-goal-track" cx="60" cy="60" r="41"></circle>
+      <circle class="ring-goal-fill" id="ringGoalFill" cx="60" cy="60" r="41"
+              transform="rotate(-90 60 60)"></circle>
     </svg>
     <div class="ring-overlay">
       <div class="ring-pct" id="ringPct">—</div>
@@ -3189,6 +3254,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   </div>
   <div class="ring-info">
     <div class="ring-status" id="ringStatus">—</div>
+    <div class="ring-done" id="ringDone"></div>
     <div class="ring-remaining" id="ringRemaining">—</div>
     <div class="ring-hours">8:00 AM – 12:00 AM</div>
   </div>
@@ -5298,7 +5364,11 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     return (data || []).map(dayStats);
   }
 
-  window.TaskStats = { fetchHistory: fetchHistory, dayStats: dayStats, categoryOf: categoryOf, activeDay: activeDay, addDays: addDays };
+  window.TaskStats = {
+    fetchHistory: fetchHistory, dayStats: dayStats, categoryOf: categoryOf,
+    activeDay: activeDay, addDays: addDays,
+    client: function () { return sb; }
+  };
 })();
 </script>
 
@@ -5317,6 +5387,9 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   const SCHEME_KEY = 'ts_scheme';
   const TARGET_KEY = 'ts_daily_target';
   const CARDS_KEY = 'ts_cards_open';
+  const SPORT_KEY = 'ts_count_sport';
+  // A workout without a finishing time counts as this much.
+  const WORKOUT_FALLBACK_MIN = 60;
   const DEFAULT_TARGET = 180;   // minutes of finished work for the top step
   const SYNC_STATE_KEY = 'task_sync_state_v1';
   const SCHEMES = [
@@ -5362,9 +5435,54 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     return v > 0 ? v : DEFAULT_TARGET;
   }
 
+  // Training and runs are work too, so they count toward the day unless
+  // this is switched off in the gear menu.
+  function countSport() {
+    try { return localStorage.getItem(SPORT_KEY) !== '0'; } catch (e) { return true; }
+  }
+
   /* ---------------------------------------------------------------- */
   /* Data                                                              */
   /* ---------------------------------------------------------------- */
+
+  // Gym sessions and runs per day, in minutes. A workout is measured from
+  // start to finish where Swagtrain recorded both.
+  let sportByDay = {};
+
+  async function loadSport() {
+    const sb = TS.client();
+    if (!sb) return;
+    const [w, r] = await Promise.all([
+      sb.from('workouts').select('performed_at, finished_at'),
+      sb.from('runs').select('performed_at, duration_s, distance_m')
+    ]);
+    const map = {};
+    const slot = function (iso) {
+      const day = dayKeyOf(new Date(iso));
+      return (map[day] = map[day] || { training: 0, run: 0, runM: 0, workouts: 0, runs: 0 });
+    };
+    (w.data || []).forEach(function (x) {
+      const start = new Date(x.performed_at).getTime();
+      const end = x.finished_at ? new Date(x.finished_at).getTime() : 0;
+      const min = end > start ? Math.round((end - start) / 60000) : 0;
+      const s = slot(x.performed_at);
+      s.training += (min >= 10 && min <= 300) ? min : WORKOUT_FALLBACK_MIN;
+      s.workouts++;
+    });
+    (r.data || []).forEach(function (x) {
+      const s = slot(x.performed_at);
+      s.run += Math.round((x.duration_s || 0) / 60);
+      s.runM += x.distance_m || 0;
+      s.runs++;
+    });
+    sportByDay = map;
+  }
+
+  function dayKeyOf(d) {
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+
+  const NO_SPORT = { training: 0, run: 0, runM: 0, workouts: 0, runs: 0 };
 
   // Server history, with any day this device still holds locally taking
   // precedence — that copy is the freshest.
@@ -5384,12 +5502,27 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       const moved = syncState[day] && Array.isArray(syncState[day].moved) ? syncState[day].moved : [];
       byDay[day] = TS.dayStats({ day: day, tasks: tasks, moved: moved });
     }
-    return Object.keys(byDay).sort().map(function (d) { return byDay[d]; });
+
+    // Days with only sport still belong in the calendar.
+    Object.keys(sportByDay).forEach(function (day) {
+      if (day > today) return;
+      if (!byDay[day]) byDay[day] = TS.dayStats({ day: day, tasks: [], moved: [] });
+    });
+
+    const withSport = countSport();
+    return Object.keys(byDay).sort().map(function (d) {
+      const s = byDay[d];
+      s.sport = sportByDay[d] || NO_SPORT;
+      s.sportMin = s.sport.training + s.sport.run;
+      s.effortTotal = s.effortDone + (withSport ? s.sportMin : 0);
+      return s;
+    });
   }
 
   async function refresh() {
     try {
-      serverRows = await TS.fetchHistory();
+      const [rows] = await Promise.all([TS.fetchHistory(), loadSport()]);
+      serverRows = rows;
       $('tsStatus').textContent = '';
       $('tsStatus').classList.remove('is-error');
     } catch (e) {
@@ -5409,7 +5542,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
 
   // Days in a row that reached at least half the daily target. Today only
   // extends a streak once it gets there; until then it doesn't break one.
-  function isGoodDay(s) { return !!s && s.score != null && s.effortDone >= dailyTarget() * 0.5; }
+  function isGoodDay(s) { return !!s && s.effortTotal >= dailyTarget() * 0.5; }
 
   function currentStreak(byDay, today) {
     let n = 0;
@@ -5432,8 +5565,8 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   // task stays pale while a long day of work glows even if something
   // stayed open.
   function level(s) {
-    if (!s || s.score == null || s.effortDone === 0) return 0;
-    const p = s.effortDone / dailyTarget();
+    if (!s || !s.effortTotal) return 0;
+    const p = s.effortTotal / dailyTarget();
     if (p >= 1) return 5;
     if (p > 0.75) return 4;
     if (p > 0.5) return 3;
@@ -5453,12 +5586,35 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     all.forEach(function (s) { byDay[s.day] = s; });
     const inRange = all.filter(function (s) { return s.day >= from && s.day <= today; });
 
+    renderRing(byDay[today]);
     if (tab === 'overview') {
       renderCards(inRange, byDay, from, today);
       renderHeatmap(byDay, from, today, all);
     } else {
       renderCategories(inRange, all);
     }
+  }
+
+  // Inner arc of the day ring: today's finished work against the target.
+  const RING_GOAL_C = 2 * Math.PI * 41;
+
+  function renderRing(todayStats) {
+    const fill = $('ringGoalFill');
+    const line = $('ringDone');
+    if (!fill) return;
+    fill.setAttribute('stroke-dasharray', String(RING_GOAL_C));
+    const done = todayStats ? todayStats.effortTotal : 0;
+    const target = dailyTarget();
+    const share = Math.min(1, done / target);
+    fill.setAttribute('stroke-dashoffset', String(RING_GOAL_C * (1 - share)));
+    fill.classList.toggle('is-done', done >= target);
+    if (!done) {
+      line.innerHTML = 'Heute noch nichts geschafft · Ziel ' + fmtMinutes(target);
+      return;
+    }
+    line.innerHTML = done >= target
+      ? '✓ Tagesziel geschafft · <strong>' + fmtMinutes(done) + '</strong>'
+      : '<strong>' + fmtMinutes(done) + '</strong> von ' + fmtMinutes(target) + ' · noch ' + fmtMinutes(target - done);
   }
 
   function unit(n, one, many) { return '<span class="ts-card-unit">' + (n === 1 ? one : many) + '</span>'; }
@@ -5469,14 +5625,18 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     const withEntry = days.filter(function (s) { return s.score != null; });
     const active = days.filter(function (s) { return s.done > 0; }).length;
 
-    const effortDone = days.reduce(function (a, s) { return a + s.effortDone; }, 0);
+    const effortTotal = days.reduce(function (a, s) { return a + s.effortTotal; }, 0);
+    const sportDays = days.filter(function (s) { return s.sportMin > 0; }).length;
     $('tsDone').textContent = done;
     $('tsDoneSub').textContent = planned
-      ? 'von ' + planned + ' geplanten · ' + fmtMinutes(effortDone) + ' geschafft'
-      : 'noch nichts geplant';
+      ? 'von ' + planned + ' geplanten · ' + fmtMinutes(effortTotal) + ' gesamt'
+      : (effortTotal ? fmtMinutes(effortTotal) + ' gesamt' : 'noch nichts geplant');
 
-    $('tsActive').innerHTML = active + unit(active, 'Tag', 'Tage');
-    $('tsActiveSub').textContent = withEntry.length ? 'von ' + withEntry.length + ' Tagen mit Tasks' : '';
+    const activeAll = days.filter(function (s) { return s.done > 0 || s.sportMin > 0; }).length;
+    $('tsActive').innerHTML = activeAll + unit(activeAll, 'Tag', 'Tage');
+    $('tsActiveSub').textContent = sportDays
+      ? active + ' mit Tasks · ' + sportDays + ' mit Sport'
+      : (withEntry.length ? 'von ' + withEntry.length + ' Tagen mit Tasks' : '');
 
     const streak = currentStreak(byDay, today);
     $('tsStreak').innerHTML = streak + unit(streak, 'Tag', 'Tage');
@@ -5532,8 +5692,9 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       if (d.getDate() <= 7 && row === 0) monthMarks.push({ col: col, label: MONTHS[d.getMonth()] });
       const outside = day < start || day > today;
       const s = byDay[day];
+      const sport = s && s.sport ? (s.sport.training && s.sport.run ? 'both' : s.sport.training ? 'training' : s.sport.run ? 'run' : '') : '';
       cells.push('<div class="ts-cell' + (outside ? ' is-outside' : '') + (day === today ? ' is-today' : '') + '"'
-        + (outside ? '' : ' data-day="' + day + '" data-level="' + level(s) + '"') + '></div>');
+        + (outside ? '' : ' data-day="' + day + '" data-level="' + level(s) + '"' + (sport ? ' data-sport="' + sport + '"' : '')) + '></div>');
     }
     const weeks = col + 1;
     if (!monthMarks.length || monthMarks[0].col > 2) {
@@ -5561,12 +5722,14 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     }).join('');
 
     const withEffort = Object.keys(byDay).filter(function (d) {
-      return d >= start && d <= today && byDay[d].effortDone > 0;
+      return d >= start && d <= today && byDay[d].effortTotal > 0;
     });
     const avg = withEffort.length
-      ? withEffort.reduce(function (a, d) { return a + byDay[d].effortDone; }, 0) / withEffort.length
+      ? withEffort.reduce(function (a, d) { return a + byDay[d].effortTotal; }, 0) / withEffort.length
       : 0;
-    $('tsHeatMeta').textContent = 'Farbe = geschaffter Aufwand · Tagesziel ' + fmtMinutes(dailyTarget())
+    $('tsHeatMeta').textContent = 'Farbe = geschaffter Aufwand'
+      + (countSport() ? ' inkl. Training und Läufe' : ' (nur Tasks)')
+      + ' · Tagesziel ' + fmtMinutes(dailyTarget())
       + (avg ? ' · Ø ' + fmtMinutes(avg) + ' an aktiven Tagen' : '');
 
     const scroll = $('tsHeatScroll');
@@ -5628,11 +5791,23 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     const s = history().find(function (x) { return x.day === day; });
     const d = parseDay(day);
     const date = WEEKDAYS[d.getDay()] + ', ' + String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
-    if (!s || s.score == null) return '<div class="ts-tooltip-date">' + date + '</div><div>Kein Eintrag</div>';
-    return '<div class="ts-tooltip-date">' + date + '</div>'
-      + '<div><strong>' + s.done + ' von ' + s.planned + '</strong> Tasks erledigt</div>'
-      + '<div>' + fmtMinutes(s.effortDone) + ' von ' + fmtMinutes(s.effortPlanned) + ' Aufwand</div>'
-      + '<div class="ts-tooltip-date">' + pct(s.effortDone / dailyTarget()) + ' vom Tagesziel</div>';
+    if (!s || (s.score == null && !s.sportMin)) {
+      return '<div class="ts-tooltip-date">' + date + '</div><div>Kein Eintrag</div>';
+    }
+    let html = '<div class="ts-tooltip-date">' + date + '</div>';
+    if (s.planned) {
+      html += '<div><strong>' + s.done + ' von ' + s.planned + '</strong> Tasks erledigt</div>'
+        + '<div>' + fmtMinutes(s.effortDone) + ' von ' + fmtMinutes(s.effortPlanned) + ' Aufwand</div>';
+    }
+    if (s.sport.training) {
+      html += '<div>🏋 Training ' + fmtMinutes(s.sport.training) + '</div>';
+    }
+    if (s.sport.run) {
+      html += '<div>🏃 Lauf ' + fmtMinutes(s.sport.run)
+        + (s.sport.runM ? ' · ' + (s.sport.runM / 1000).toFixed(1).replace('.', ',') + ' km' : '') + '</div>';
+    }
+    return html + '<div class="ts-tooltip-date">' + fmtMinutes(s.effortTotal) + ' gesamt · '
+      + pct(s.effortTotal / dailyTarget()) + ' vom Tagesziel</div>';
   }
 
   function showTooltip(cell) {
@@ -5737,6 +5912,11 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   $('tsTarget').value = String(dailyTarget());
   $('tsTarget').addEventListener('change', function () {
     try { localStorage.setItem(TARGET_KEY, $('tsTarget').value); } catch (err) {}
+    render();
+  });
+  $('tsSport').checked = countSport();
+  $('tsSport').addEventListener('change', function () {
+    try { localStorage.setItem(SPORT_KEY, $('tsSport').checked ? '1' : '0'); } catch (err) {}
     render();
   });
   document.addEventListener('click', function () {
