@@ -5849,6 +5849,9 @@ const CONFIG = {
   // Swagtrain has no rep ranges. The old coach config is still keyed by
   // the same exercise ids, so it is used where it exists.
   const RX_DEFAULTS = { repMin: 6, repMax: 10, step: 2.5 };
+  // How far back the trend and the history list reach, in sessions.
+  const TREND_SESSIONS = 24;
+  const HISTORY_SESSIONS = 24;
 
   let train = { loaded: false, gyms: [], exercises: {}, sessions: [] };
 
@@ -6099,7 +6102,7 @@ const CONFIG = {
     const svg = $('sparkline');
     const empty = $('sparkEmpty');
     const caption = $('trendCaption');
-    const sessions = currentSessions().slice(-10);
+    const sessions = currentSessions().slice(-TREND_SESSIONS);
     if (sessions.length < 2) {
       svg.style.display = 'none'; empty.style.display = 'block'; caption.innerHTML = '';
       return;
@@ -6147,7 +6150,7 @@ const CONFIG = {
       return;
     }
     const bw = isBodyweight(sessions);
-    wrap.innerHTML = sessions.slice().reverse().slice(0, 12).map(s =>
+    wrap.innerHTML = sessions.slice().reverse().slice(0, HISTORY_SESSIONS).map(s =>
       '<div class="po-hist-row po-hist-ro">'
       + '<div class="po-hist-date">' + fmtShortDate(s.date) + '</div>'
       + '<div class="po-hist-sets">' + escape(fmtSets(s.sets, bw)) + '</div>'
