@@ -3003,6 +3003,8 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
           <option value="240">4 Stunden</option>
           <option value="300">5 Stunden</option>
           <option value="360">6 Stunden</option>
+          <option value="480">8 Stunden</option>
+          <option value="600">10 Stunden</option>
         </select>
         <div class="ts-hint" style="margin-top:6px;max-width:190px">Geschaffter Aufwand für die stärkste Farbe</div>
       </div>
@@ -3891,7 +3893,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   // How much work a task is, in minutes. The statistics colour a day by the
   // effort actually finished, so a 15-minute errand can't look like a
   // four-hour block. Unset tasks count as DEFAULT_EFFORT.
-  const EFFORT_CYCLE = [null, 15, 30, 60, 120, 240];
+  const EFFORT_CYCLE = [null, 15, 30, 60, 120, 240, 360, 480];
   const DEFAULT_EFFORT = 30;
 
   function effortLabel(min) {
@@ -5944,10 +5946,12 @@ const CONFIG = {
     }
   };
 
+  // 'all' merges the gyms — useful for exercises where the weight means the
+  // same in both, and for older sessions that were never assigned.
   function currentGymId() {
     const withData = new Set(train.sessions.map(s => s.gymId));
     const gyms = train.gyms.filter(g => !g.archived_at || withData.has(g.id));
-    if (!gyms.find(g => g.id === state.ovGym)) {
+    if (state.ovGym !== 'all' && !gyms.find(g => g.id === state.ovGym)) {
       const last = train.sessions[train.sessions.length - 1];
       state.ovGym = last ? last.gymId : (gyms[0] && gyms[0].id);
     }
@@ -5956,7 +5960,7 @@ const CONFIG = {
   function exercisesAtGym(gymId) {
     const lastSeen = {};
     train.sessions.forEach(s => {
-      if (s.gymId !== gymId) return;
+      if (gymId !== 'all' && s.gymId !== gymId) return;
       s.byEx.forEach((_, exId) => { lastSeen[exId] = s.date; });
     });
     return Object.keys(lastSeen)
@@ -5975,7 +5979,8 @@ const CONFIG = {
   }
   function currentSessions() {
     const ex = getCurrentEx();
-    return ex ? exerciseSessions(ex.id, currentGymId()) : [];
+    const gymId = currentGymId();
+    return ex ? exerciseSessions(ex.id, gymId === 'all' ? null : gymId) : [];
   }
 
   // Prescription engine — "what should I do next session?", driven by
@@ -6012,7 +6017,8 @@ const CONFIG = {
     const gyms = train.gyms.filter(g => !g.archived_at || withData.has(g.id));
     $('gymSeg').innerHTML = gyms.map(g =>
       '<button class="po-seg-btn ' + (g.id === gymId ? 'active' : '') + '" data-gym="' + g.id + '">' + escape(g.name) + '</button>'
-    ).join('');
+    ).join('')
+      + '<button class="po-seg-btn ' + (gymId === 'all' ? 'active' : '') + '" data-gym="all" title="Beide Gyms zusammen">Alle</button>';
     $('gymSeg').querySelectorAll('.po-seg-btn').forEach(b => {
       b.addEventListener('click', () => { state.ovGym = b.dataset.gym; state.ovEx = null; saveState(); renderAll(); });
     });
