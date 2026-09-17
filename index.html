@@ -719,6 +719,81 @@
   }
   .goal-effort-label { font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em; }
 
+  /* Effort picker: presets for speed, free input for everything else. */
+  .gep {
+    position: fixed;
+    z-index: 60;
+    width: 232px;
+    padding: 12px;
+    border-radius: 14px;
+    background: #141416;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  }
+  .gep-title {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    margin-bottom: 8px;
+  }
+  .gep-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 10px; }
+  .gep-chip {
+    padding: 5px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .gep-chip:hover { background: rgba(255, 255, 255, 0.10); color: var(--text-primary); }
+  .gep-chip.is-active {
+    background: rgba(230, 171, 78, 0.18);
+    border-color: rgba(230, 171, 78, 0.5);
+    color: #E6AB4E;
+  }
+  .gep-form { display: flex; gap: 6px; }
+  .gep-form input {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    border-radius: 9px;
+    border: 1px solid rgba(255, 255, 255, 0.10);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 12.5px;
+  }
+  .gep-form input:focus { outline: none; border-color: rgba(255, 255, 255, 0.34); }
+  .gep-form button {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 9px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #E8E5DD 100%);
+    color: #0A0A0B;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .gep-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 8px; }
+  .gep-hint { font-size: 10.5px; color: var(--text-tertiary); }
+  .gep-clear {
+    border: none;
+    background: none;
+    color: var(--text-tertiary);
+    font-family: inherit;
+    font-size: 11px;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .gep-clear:hover { color: var(--text-secondary); }
+
   /* Touch screens have no hover, so both controls stay visible there. */
   @media (hover: none) {
     .goal-prio, .goal-sub .goal-prio, .goal-effort { opacity: 0.7; }
@@ -3920,7 +3995,7 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   // How much work a task is, in minutes. The statistics colour a day by the
   // effort actually finished, so a 15-minute errand can't look like a
   // four-hour block. Unset tasks count as DEFAULT_EFFORT.
-  const EFFORT_CYCLE = [null, 15, 30, 60, 120, 240, 360, 480];
+  const EFFORT_PRESETS = [15, 30, 45, 60, 90, 120, 180, 240, 360, 480];
   const DEFAULT_EFFORT = 30;
 
   function effortLabel(min) {
@@ -3928,6 +4003,89 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     if (min > 60) return Math.floor(min / 60) + 'h' + (min % 60);
     return min + 'm';
   }
+
+  // Accepts "90", "90m", "3h", "1,5h", "1:45", "2h30" — anything up to a day.
+  function parseEffort(text) {
+    const s = String(text).trim().toLowerCase().replace(',', '.');
+    if (!s) return null;
+    let m = /^(\d+):(\d{1,2})$/.exec(s);
+    if (m) return clampEffort(Number(m[1]) * 60 + Number(m[2]));
+    m = /^(\d+(?:\.\d+)?)\s*(h|std|stunden?)$/.exec(s);
+    if (m) return clampEffort(Math.round(Number(m[1]) * 60));
+    m = /^(\d+)\s*(h|std)\s*(\d{1,2})$/.exec(s);
+    if (m) return clampEffort(Number(m[1]) * 60 + Number(m[3]));
+    m = /^(\d+)\s*(m|min|minuten?)?$/.exec(s);
+    if (m) return clampEffort(Number(m[1]));
+    return null;
+  }
+  function clampEffort(min) {
+    return Number.isFinite(min) && min >= 1 && min <= 1440 ? Math.round(min) : null;
+  }
+
+  // One picker shared by every row: presets plus a free field.
+  const effortPop = (function () {
+    const pop = document.createElement('div');
+    pop.className = 'gep';
+    pop.hidden = true;
+    pop.innerHTML =
+      '<div class="gep-title">Aufwand</div>'
+      + '<div class="gep-chips"></div>'
+      + '<form class="gep-form"><input type="text" inputmode="text" placeholder="z. B. 3h, 90m, 1:45" autocomplete="off"><button type="submit">OK</button></form>'
+      + '<div class="gep-foot"><span class="gep-hint">Standard ' + DEFAULT_EFFORT + ' min</span><button type="button" class="gep-clear">zurücksetzen</button></div>';
+    document.body.appendChild(pop);
+
+    const chips = pop.querySelector('.gep-chips');
+    const form = pop.querySelector('.gep-form');
+    const input = form.querySelector('input');
+    let apply = null;
+
+    function close() { pop.hidden = true; apply = null; }
+
+    function open(anchor, current, onPick) {
+      apply = onPick;
+      chips.innerHTML = EFFORT_PRESETS.map(function (min) {
+        return '<button type="button" class="gep-chip' + (min === current ? ' is-active' : '') + '" data-min="' + min + '">' + effortLabel(min) + '</button>';
+      }).join('');
+      input.value = current ? effortLabel(current) : '';
+      pop.hidden = false;
+
+      const r = anchor.getBoundingClientRect();
+      const w = pop.offsetWidth, h = pop.offsetHeight;
+      let left = Math.min(Math.max(8, r.left - w / 2 + r.width / 2), window.innerWidth - w - 8);
+      let top = r.bottom + 8;
+      if (top + h > window.innerHeight - 8) top = Math.max(8, r.top - h - 8);
+      pop.style.left = left + 'px';
+      pop.style.top = top + 'px';
+      setTimeout(function () { input.focus(); input.select(); }, 20);
+    }
+
+    function pick(value) {
+      const fn = apply;
+      close();
+      if (fn) fn(value);
+    }
+
+    chips.addEventListener('click', function (e) {
+      const b = e.target.closest('.gep-chip');
+      if (b) pick(Number(b.dataset.min));
+    });
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const min = parseEffort(input.value);
+      if (min == null) {
+        input.select();
+        return;
+      }
+      pick(min);
+    });
+    pop.querySelector('.gep-clear').addEventListener('click', function () { pick(null); });
+    pop.addEventListener('click', function (e) { e.stopPropagation(); });
+    pop.addEventListener('keydown', function (e) { if (e.key === 'Escape') close(); });
+    document.addEventListener('click', function () { if (!pop.hidden) close(); });
+    window.addEventListener('resize', close);
+
+    return { open: open, close: close };
+  })();
 
   function buildEffortControl(effort, onCycle) {
     const btn = document.createElement('button');
@@ -3946,9 +4104,9 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       btn.appendChild(label);
     }
 
-    btn.addEventListener('click', function () {
-      const at = EFFORT_CYCLE.indexOf(effort || null);
-      onCycle(EFFORT_CYCLE[(at + 1) % EFFORT_CYCLE.length]);
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      effortPop.open(btn, effort || null, onCycle);
     });
     return btn;
   }
