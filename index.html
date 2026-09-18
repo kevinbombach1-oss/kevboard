@@ -1,9 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Kevins Dashboard</title>
+<meta name="theme-color" content="#050506">
+<meta name="description" content="Tasks, Training und Läufe an einem Ort">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Dashboard">
 <style>
   :root {
     --text-primary: #FAFAFA;
@@ -727,11 +735,11 @@
     font-size: 12px;
     line-height: 1;
     color: var(--text-tertiary);
-    opacity: 0;
+    opacity: 0.5;
     cursor: pointer;
     transition: opacity 0.2s ease;
   }
-  .goal-item:hover .goal-effort { opacity: 0.65; }
+  .goal-item:hover .goal-effort { opacity: 0.8; }
   .goal-effort:hover { opacity: 1; }
   .goal-effort.is-set {
     opacity: 1;
@@ -817,9 +825,55 @@
   }
   .gep-clear:hover { color: var(--text-secondary); }
 
-  /* Touch screens have no hover, so both controls stay visible there. */
+  /* Focus timer — measures the real time spent on a task. */
+
+  .goal-focus {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    padding: 3px 6px;
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1;
+    color: var(--text-tertiary);
+    /* Visible without hovering: these two are the ones you reach for. */
+    opacity: 0.5;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+  }
+  .goal-item:hover .goal-focus { opacity: 0.8; }
+  .goal-focus:hover { opacity: 1; }
+  .goal-focus.is-running {
+    opacity: 1;
+    background: rgba(107, 227, 164, 0.18);
+    border-color: rgba(107, 227, 164, 0.5);
+    color: #6BE3A4;
+  }
+  .goal-focus-time {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .goal-spent {
+    flex: 0 0 auto;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--text-tertiary);
+    font-variant-numeric: tabular-nums;
+  }
+  .goal-item.is-focus {
+    background: rgba(107, 227, 164, 0.08);
+    border-color: rgba(107, 227, 164, 0.35);
+  }
+
+  /* Touch screens have no hover, so the controls stay visible there. */
   @media (hover: none) {
-    .goal-prio, .goal-sub .goal-prio, .goal-effort { opacity: 0.7; }
+    .goal-prio, .goal-sub .goal-prio, .goal-effort, .goal-focus { opacity: 0.7; }
   }
 
   /* Queued owns the left stripe, so priority washes the whole row instead
@@ -1443,6 +1497,35 @@
     line-height: 1.35;
   }
   .ts-check input { accent-color: #E6AB4E; width: 15px; height: 15px; flex: 0 0 auto; }
+
+  /* Evening reminder to plan tomorrow */
+  .rem-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: rgba(230, 171, 78, 0.12);
+    border: 1px solid rgba(230, 171, 78, 0.35);
+    color: #F0C57E;
+    font-size: 12.5px;
+  }
+  .rem-dismiss {
+    flex: 0 0 auto;
+    border: none;
+    background: rgba(255, 255, 255, 0.10);
+    color: var(--text-primary);
+    border-radius: 8px;
+    padding: 5px 12px;
+    font-family: inherit;
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .rem-dismiss:hover { background: rgba(255, 255, 255, 0.16); }
+  .rem-banner[hidden] { display: none; }
   .ts-heat-scroll { overflow-x: auto; padding-bottom: 4px; }
   .ts-heat {
     display: grid;
@@ -3162,6 +3245,15 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
         </select>
         <div class="ts-hint" style="margin-top:6px;max-width:190px">Geschaffter Aufwand für die stärkste Farbe</div>
         <label class="ts-check"><input type="checkbox" id="tsSport" checked> Training und Läufe mitzählen</label>
+        <label class="ts-check"><input type="checkbox" id="tsRemind"> Abends an morgen erinnern</label>
+        <select class="goal-input ts-target" id="tsRemindAt" aria-label="Uhrzeit der Erinnerung">
+          <option value="18">ab 18 Uhr</option>
+          <option value="19">ab 19 Uhr</option>
+          <option value="20" selected>ab 20 Uhr</option>
+          <option value="21">ab 21 Uhr</option>
+          <option value="22">ab 22 Uhr</option>
+        </select>
+        <div class="ts-hint" id="tsRemindHint" style="margin-top:6px;max-width:190px"></div>
       </div>
     </div>
   </div>
@@ -3310,6 +3402,10 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       <div class="gm-tomorrow-count" id="gmTomorrowCount">0 planned</div>
     </div>
 
+    <div class="rem-banner" id="remBanner" hidden>
+      <span id="remText">Für morgen ist noch nichts geplant.</span>
+      <button type="button" class="rem-dismiss" id="remDismiss">Ok</button>
+    </div>
     <ul id="tomorrowList" class="goal-list gm-list"></ul>
     <div id="tomorrowEmptyState" class="empty-state">Nothing planned for tomorrow yet</div>
 
@@ -4153,6 +4249,78 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     return { open: open, close: close };
   })();
 
+  // Focus timer. One task at a time; the run survives a reload because it
+  // is stored as a start time, not as a ticking counter.
+  const FOCUS_KEY = 'focus_timer_v1';
+  let focusTick = null;
+
+  function focusRun() {
+    try {
+      const raw = localStorage.getItem(FOCUS_KEY);
+      const v = raw ? JSON.parse(raw) : null;
+      return v && v.text && v.startedAt ? v : null;
+    } catch (e) { return null; }
+  }
+
+  function focusElapsed(run) { return Math.max(0, Date.now() - run.startedAt); }
+
+  function fmtClock(ms) {
+    const s = Math.floor(ms / 1000);
+    return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
+  }
+
+  function startFocus(key, text) {
+    stopFocus();
+    try { localStorage.setItem(FOCUS_KEY, JSON.stringify({ key: key, text: text, startedAt: Date.now() })); } catch (e) {}
+  }
+
+  // Rounds up, so a three-minute burst still shows as a minute of work.
+  function stopFocus() {
+    const run = focusRun();
+    try { localStorage.removeItem(FOCUS_KEY); } catch (e) {}
+    if (!run) return 0;
+    const minutes = Math.max(1, Math.round(focusElapsed(run) / 60000));
+    const goals = storeGet(run.key) || [];
+    const hit = goals.find(function (g) { return g.text === run.text; });
+    if (!hit) return 0;
+    hit.spent = (hit.spent || 0) + minutes;
+    storeSet(run.key, goals);
+    return minutes;
+  }
+
+  function buildFocusControl(goal, key, reload) {
+    const run = focusRun();
+    const running = !!run && run.key === key && run.text === goal.text;
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'goal-focus' + (running ? ' is-running' : '');
+    btn.title = running ? 'Fokus stoppen und Zeit gutschreiben' : 'Fokus starten';
+
+    const icon = document.createElement('span');
+    icon.textContent = running ? '⏸' : '▶';
+    btn.appendChild(icon);
+
+    if (running) {
+      const time = document.createElement('span');
+      time.className = 'goal-focus-time';
+      time.textContent = fmtClock(focusElapsed(run));
+      btn.appendChild(time);
+      clearInterval(focusTick);
+      focusTick = setInterval(function () {
+        const r = focusRun();
+        if (!r) { clearInterval(focusTick); return; }
+        time.textContent = fmtClock(focusElapsed(r));
+      }, 1000);
+    }
+
+    btn.addEventListener('click', function () {
+      if (running) stopFocus();
+      else startFocus(key, goal.text);
+      reload();
+    });
+    return btn;
+  }
+
   function buildEffortControl(effort, onCycle) {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -4403,6 +4571,18 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
       reload();
     });
 
+    const focusBtn = readOnly ? null : buildFocusControl(goal, key, reload);
+    const runNow = focusRun();
+    if (!readOnly && runNow && runNow.key === key && runNow.text === goal.text) li.classList.add('is-focus');
+
+    let spentEl = null;
+    if (goal.spent) {
+      spentEl = document.createElement('span');
+      spentEl.className = 'goal-spent';
+      spentEl.textContent = effortLabel(goal.spent);
+      spentEl.title = 'Gemessene Zeit' + (goal.effort ? ' (geschätzt: ' + effortLabel(goal.effort) + ')' : '');
+    }
+
     const effortBtn = buildEffortControl(goal.effort, function (next) {
       const goals = storeGet(key) || [];
       if (!goals[idx]) return;
@@ -4454,6 +4634,8 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     li.appendChild(cb);
     li.appendChild(text);
     if (count) li.appendChild(count);
+    if (spentEl) li.appendChild(spentEl);
+    if (focusBtn) li.appendChild(focusBtn);
     li.appendChild(effortBtn);
     li.appendChild(prioBtn);
     li.appendChild(addSubBtn);
@@ -4480,6 +4662,8 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   // `queued` is deliberately dropped: it marks today's productivity
   // window, so a new day starts with that slate clear.
   function carryGoal(goal) {
+    // `spent` stays behind: the measured time belongs to the day it
+    // happened on, not to the copy that moves forward.
     const copy = { text: goal.text, done: false };
     if (goal.priority) copy.priority = goal.priority;
     if (goal.effort) copy.effort = goal.effort;
@@ -5330,10 +5514,15 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   function dayStats(row) {
     const tasks = Array.isArray(row.tasks) ? row.tasks : [];
     const moved = Array.isArray(row.moved) ? row.moved : [];
+    // Measured time beats the estimate — but only from five minutes up, so
+    // a timer started and stopped by accident can't shrink a long task.
     const items = tasks.map(function (t) {
+      const spent = t.spent || 0;
       return {
         text: t.text, done: !!t.done, doneAt: t.done && t.doneAt ? t.doneAt : null,
-        category: categoryOf(t.text), effort: t.effort || DEFAULT_EFFORT
+        category: categoryOf(t.text),
+        effort: spent >= 5 ? spent : (t.effort || DEFAULT_EFFORT),
+        spent: spent
       };
     }).concat(moved.map(function (m) {
       return {
@@ -5345,10 +5534,11 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     const done = items.filter(function (t) { return t.done; }).length;
     const effortPlanned = items.reduce(function (a, t) { return a + t.effort; }, 0);
     const effortDone = items.reduce(function (a, t) { return a + (t.done ? t.effort : 0); }, 0);
+    const measured = items.reduce(function (a, t) { return a + (t.spent || 0); }, 0);
     return {
       day: row.day, planned: planned, done: done,
       score: planned ? done / planned : null,
-      effortPlanned: effortPlanned, effortDone: effortDone,
+      effortPlanned: effortPlanned, effortDone: effortDone, measured: measured,
       items: items
     };
   }
@@ -5797,7 +5987,8 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
     let html = '<div class="ts-tooltip-date">' + date + '</div>';
     if (s.planned) {
       html += '<div><strong>' + s.done + ' von ' + s.planned + '</strong> Tasks erledigt</div>'
-        + '<div>' + fmtMinutes(s.effortDone) + ' von ' + fmtMinutes(s.effortPlanned) + ' Aufwand</div>';
+        + '<div>' + fmtMinutes(s.effortDone) + ' von ' + fmtMinutes(s.effortPlanned) + ' Aufwand'
+        + (s.measured ? ' · ' + fmtMinutes(s.measured) + ' gemessen' : '') + '</div>';
     }
     if (s.sport.training) {
       html += '<div>🏋 Training ' + fmtMinutes(s.sport.training) + '</div>';
@@ -5956,6 +6147,125 @@ a.po-tw-done-btn { text-decoration: none; display: inline-block; }
   });
 
   render();
+})();
+</script>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ---------------------------------------------------------------- */
+  /* App install + evening reminder                                    */
+  /* ---------------------------------------------------------------- */
+
+  const $ = function (id) { return document.getElementById(id); };
+  const REMIND_KEY = 'rem_enabled';
+  const REMIND_AT_KEY = 'rem_hour';
+  const REMIND_DONE_KEY = 'rem_last_day';
+
+  // Offline start and "add to home screen". The worker keeps the shell,
+  // never the Supabase data.
+  if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js').catch(function () {});
+    });
+  }
+
+  function get(key, fallback) {
+    try {
+      const v = localStorage.getItem(key);
+      return v == null ? fallback : v;
+    } catch (e) { return fallback; }
+  }
+  function set(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) {}
+  }
+
+  function tomorrowKey() {
+    const now = new Date();
+    if (now.getHours() >= 6) now.setDate(now.getDate() + 1);
+    return 'goals:' + now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0');
+  }
+  function todayStamp() {
+    const now = new Date();
+    if (now.getHours() < 6) now.setDate(now.getDate() - 1);
+    return now.toISOString().slice(0, 10);
+  }
+  function plannedForTomorrow() {
+    try { return (JSON.parse(localStorage.getItem(tomorrowKey())) || []).length; } catch (e) { return 0; }
+  }
+
+  function enabled() { return get(REMIND_KEY, '0') === '1'; }
+  function remindHour() { return Number(get(REMIND_AT_KEY, '20')) || 20; }
+
+  function hint() {
+    if (!('Notification' in window)) {
+      return 'Dieser Browser kennt keine Benachrichtigungen — der Hinweis erscheint dann nur auf der Seite.';
+    }
+    if (Notification.permission === 'granted') {
+      return 'Meldet sich, solange das Dashboard geöffnet ist.';
+    }
+    if (Notification.permission === 'denied') {
+      return 'Benachrichtigungen sind für die Seite blockiert. Der Hinweis erscheint nur hier auf der Seite.';
+    }
+    return 'Beim Aktivieren fragt der Browser nach der Erlaubnis.';
+  }
+
+  function showBanner(count) {
+    $('remText').textContent = count
+      ? 'Für morgen stehen ' + count + ' Tasks. Noch etwas vergessen?'
+      : 'Für morgen ist noch nichts geplant.';
+    $('remBanner').hidden = false;
+  }
+
+  function notify(count) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    try {
+      new Notification('Morgen planen', {
+        body: count ? count + ' Tasks stehen für morgen.' : 'Für morgen ist noch nichts geplant.',
+        icon: 'icon-192.png',
+        tag: 'plan-tomorrow'
+      });
+    } catch (e) {}
+  }
+
+  // Runs while the dashboard is open: once per evening, and only when
+  // tomorrow still looks empty.
+  function check() {
+    if (!enabled()) return;
+    const now = new Date();
+    if (now.getHours() < remindHour() || now.getHours() >= 24) return;
+    if (get(REMIND_DONE_KEY, '') === todayStamp()) return;
+    const count = plannedForTomorrow();
+    if (count > 0) return;
+    set(REMIND_DONE_KEY, todayStamp());
+    showBanner(count);
+    notify(count);
+  }
+
+  $('remDismiss').addEventListener('click', function () { $('remBanner').hidden = true; });
+
+  $('tsRemind').checked = enabled();
+  $('tsRemindAt').value = String(remindHour());
+  $('tsRemindHint').textContent = hint();
+
+  $('tsRemind').addEventListener('change', async function () {
+    const on = $('tsRemind').checked;
+    set(REMIND_KEY, on ? '1' : '0');
+    if (on && 'Notification' in window && Notification.permission === 'default') {
+      try { await Notification.requestPermission(); } catch (e) {}
+    }
+    $('tsRemindHint').textContent = hint();
+    if (on) check();
+  });
+  $('tsRemindAt').addEventListener('change', function () {
+    set(REMIND_AT_KEY, $('tsRemindAt').value);
+    $('tsRemindHint').textContent = hint();
+  });
+
+  setInterval(check, 60 * 1000);
+  window.addEventListener('goals-booted', check);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden) check(); });
 })();
 </script>
 
